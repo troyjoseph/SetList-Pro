@@ -3,7 +3,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { GigType, Range, Song, Singer, EventDetails, ViewState, SpecialMoment } from '../types';
 import { INITIAL_SONGS, INITIAL_SINGERS, createGigData } from '../constants';
-import { enrichSongData } from '../services/geminiService';
 import { generateSetList, calculateSetStructure } from '../services/autoBuilder';
 
 export const useAppLogic = () => {
@@ -125,24 +124,50 @@ export const useAppLogic = () => {
 
   // --- Actions ---
 
-  const handleAddSong = async (title: string) => {
-    if (!title.trim()) {
+  const handleAddSong = (input: string) => {
+    if (!input.trim()) {
         const blankSong: Song = { id: uuidv4(), title: '', artist: '', originalKey: '', gigData: createGigData() };
         setEditingSong({...blankSong}); 
         setActiveGigTypeTab(GigType.WEDDING); 
         setIsSongModalOpen(true);
         return;
     }
-    setIsAddingSong(true);
-    const enriched = await enrichSongData(title);
-    if (enriched) {
-      const newSong = { id: uuidv4(), ...enriched } as Song;
-      setSongs(prev => [newSong, ...prev]);
-    } else {
-        const newSong: Song = { id: uuidv4(), title: title, artist: 'Unknown', originalKey: 'C', gigData: createGigData() };
-        setSongs(prev => [newSong, ...prev]);
+
+    let title = input.trim();
+    let artist = 'Unknown';
+
+    // Standardize input based on "Title - Artist" or "Title by Artist"
+    const dashMatch = title.match(/^(.*?)\s*[-–—]\s*(.*)$/);
+    const byMatch = title.match(/^(.*?)\s+by\s+(.*)$/i);
+
+    if (dashMatch) {
+      title = dashMatch[1].trim();
+      artist = dashMatch[2].trim();
+    } else if (byMatch) {
+      title = byMatch[1].trim();
+      artist = byMatch[2].trim();
     }
-    setIsAddingSong(false);
+
+    // Best-effort Title Casing
+    const toTitleCase = (str: string) => {
+       const smallWords = /^(a|an|and|as|at|but|by|en|for|if|in|nor|of|on|or|per|the|to|vs?\.?|via)$/i;
+       return str.split(/\s+/).map((word, index) => {
+         if (index > 0 && smallWords.test(word)) {
+           return word.toLowerCase();
+         }
+         return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+       }).join(' ');
+    };
+
+    const newSong: Song = { 
+        id: uuidv4(), 
+        title: toTitleCase(title), 
+        artist: artist === 'Unknown' ? 'Unknown' : toTitleCase(artist), 
+        originalKey: 'C', 
+        gigData: createGigData() 
+    };
+    
+    setSongs(prev => [newSong, ...prev]);
   };
 
   const createNewEvent = () => {

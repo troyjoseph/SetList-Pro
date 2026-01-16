@@ -1,7 +1,9 @@
+
 import React, { useState, useRef } from 'react';
 import { X, Sparkles, FileDown, Loader2, Search, Check } from 'lucide-react';
 import { Singer, Song, Range } from '../../types';
 import { parseRepertoireText } from '../../services/geminiService';
+import { searchMusicBrainz } from '../../services/musicBrainzService';
 import { v4 as uuidv4 } from 'uuid';
 import { createGigData } from '../../constants';
 import { COMMON } from '../../styles/common';
@@ -136,6 +138,36 @@ export const SingerModal: React.FC<SingerModalProps> = ({ isOpen, onClose, editi
         e.target.value = '';
     };
 
+    // Standardize pending items using MusicBrainz
+    const handleStandardize = async (setProgress: (msg: string) => void) => {
+        const items = [...pendingImports];
+        const total = items.length;
+        
+        for (let i = 0; i < total; i++) {
+            const item = items[i];
+            // Skip existing known songs or items with no title
+            if (!item.isNew || !item.title) continue;
+
+            setProgress(`Searching MusicBrainz: ${item.title} (${i + 1}/${total})...`);
+            
+            // Note: musicbrainz-api library handles rate limiting internally
+            const metadata = await searchMusicBrainz(item.title, item.artist);
+            
+            if (metadata) {
+                items[i] = {
+                    ...item,
+                    title: metadata.title,
+                    artist: metadata.artist,
+                    // Only update key if MB returned one (rare) and we don't have a specific singer key
+                    originalKey: metadata.key || item.originalKey
+                };
+            }
+        }
+        
+        setPendingImports(items);
+        setProgress('');
+    };
+
     const handleUpdatePendingItem = (tempId: string, field: 'singerKey' | 'originalKey', value: string) => {
         setPendingImports(prev => prev.map(item => 
             item.tempId === tempId ? { ...item, [field]: value } : item
@@ -180,6 +212,7 @@ export const SingerModal: React.FC<SingerModalProps> = ({ isOpen, onClose, editi
                 onUpdateItem={handleUpdatePendingItem}
                 onConfirm={handleConfirmImport}
                 onCancel={() => setPendingImports([])}
+                onStandardize={handleStandardize}
             />
         );
     }

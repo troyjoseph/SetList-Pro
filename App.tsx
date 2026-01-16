@@ -1,13 +1,30 @@
+
 import React from 'react';
 import { useAppLogic } from './hooks/useAppLogic';
+import { useAuth } from './contexts/AuthContext';
 import { AppSidebar } from './components/layout/AppSidebar';
 import { MainContent } from './components/layout/MainContent';
 import { PrintView } from './components/PrintView';
+import { AuthPage } from './components/AuthPage';
 import { SingerModal, SongModal, MomentModal, ConfirmModal } from './components/Modals';
 import { LAYOUT } from './styles/layout';
+import { Loader2 } from 'lucide-react';
 
 export default function App() {
+  const { user, loading } = useAuth();
   const logic = useAppLogic();
+
+  if (loading) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-gray-50">
+        <Loader2 size={48} className="text-indigo-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
   
   // Print View is special as it takes over the whole screen
   if (logic.view === 'PRINT') {

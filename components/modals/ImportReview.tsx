@@ -1,4 +1,6 @@
-import React from 'react';
+
+import React, { useState } from 'react';
+import { Sparkles, Loader2 } from 'lucide-react';
 import { COMMON } from '../../styles/common';
 import { MODAL } from '../../styles/modals';
 
@@ -18,9 +20,19 @@ interface ImportReviewProps {
   onUpdateItem: (id: string, field: 'singerKey' | 'originalKey', value: string) => void;
   onConfirm: () => void;
   onCancel: () => void;
+  onStandardize: (setProgress: (msg: string) => void) => Promise<void>;
 }
 
-export const ImportReview: React.FC<ImportReviewProps> = ({ items, onUpdateItem, onConfirm, onCancel }) => {
+export const ImportReview: React.FC<ImportReviewProps> = ({ items, onUpdateItem, onConfirm, onCancel, onStandardize }) => {
+  const [progress, setProgress] = useState('');
+  const [isStandardizing, setIsStandardizing] = useState(false);
+
+  const handleStandardizeClick = async () => {
+      setIsStandardizing(true);
+      await onStandardize(setProgress);
+      setIsStandardizing(false);
+  };
+
   return (
     <div className={MODAL.OVERLAY}>
       <div className={`${MODAL.CONTAINER} ${MODAL.SIZE.XL} ${MODAL.SIZE.MAX_HEIGHT}`}>
@@ -29,10 +41,26 @@ export const ImportReview: React.FC<ImportReviewProps> = ({ items, onUpdateItem,
         </div>
         
         <div className={MODAL.BODY}>
-          <p className="text-sm text-gray-600 mb-4">
-             Review the songs below. Use <b>Tab</b> to move between key inputs.
-             Items marked <span className="text-green-600 font-bold">New</span> will be added to the Song Bank.
-          </p>
+          <div className="flex justify-between items-start mb-4">
+             <p className="text-sm text-gray-600">
+                Review the songs below. Use <b>Tab</b> to move between key inputs.
+                Items marked <span className="text-green-600 font-bold">New</span> will be added to the Song Bank.
+             </p>
+             <button 
+                onClick={handleStandardizeClick} 
+                disabled={isStandardizing}
+                className="flex items-center text-xs bg-purple-50 text-purple-700 px-3 py-2 rounded-md hover:bg-purple-100 border border-purple-200 transition-colors disabled:opacity-50"
+             >
+                {isStandardizing ? <Loader2 size={14} className="animate-spin mr-2"/> : <Sparkles size={14} className="mr-2"/>}
+                Standardize with MusicBrainz
+             </button>
+          </div>
+
+          {progress && (
+              <div className="mb-4 bg-indigo-50 text-indigo-700 px-4 py-2 rounded text-sm flex items-center">
+                  <Loader2 size={14} className="animate-spin mr-2"/> {progress}
+              </div>
+          )}
           
           <div className={MODAL.REVIEW.TABLE_CONTAINER}>
              <table className={MODAL.REVIEW.TABLE}>
@@ -101,7 +129,7 @@ export const ImportReview: React.FC<ImportReviewProps> = ({ items, onUpdateItem,
           <COMMON.BUTTON.SECONDARY onClick={onCancel}>
              Cancel Import
           </COMMON.BUTTON.SECONDARY>
-          <COMMON.BUTTON.PRIMARY onClick={onConfirm}>
+          <COMMON.BUTTON.PRIMARY onClick={onConfirm} disabled={isStandardizing}>
              Confirm Import ({items.length} Songs)
           </COMMON.BUTTON.PRIMARY>
         </div>

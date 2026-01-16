@@ -14,6 +14,12 @@ export enum Range {
 
 export type SetPreference = 'FIRST' | 'FIRST_TWO' | 'LAST' | 'LAST_TWO' | 'ANY';
 
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+}
+
 export interface GigSpecificData {
   rating: number; // 0-3
   isSlow: boolean;

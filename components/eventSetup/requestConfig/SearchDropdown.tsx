@@ -18,7 +18,7 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({ search, songs, o
     .slice(0, 3);
 
   // Find matching artists
-  const uniqueArtists = Array.from(new Set(songs.map(s => s.artist)));
+  const uniqueArtists = Array.from<string>(new Set(songs.map(s => s.artist)));
   const matchingArtists = uniqueArtists
     .filter(a => a.toLowerCase().includes(lowerSearch))
     .slice(0, 2);
