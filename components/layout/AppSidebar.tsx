@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, Music, Users, Settings as SettingsIcon, ListMusic, Calendar, LogOut } from 'lucide-react';
+import { LayoutDashboard, Music, Users, Settings as SettingsIcon, ListMusic, Calendar } from 'lucide-react';
 import { NavButton } from '../Shared';
 import { LAYOUT } from '../../styles/layout';
 import { EventDetails, ViewState } from '../../types';
@@ -14,7 +14,7 @@ interface AppSidebarProps {
 }
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({ view, setView, activeEventId, currentEvent }) => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
     <LAYOUT.SIDEBAR.CONTAINER>
@@ -58,13 +58,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ view, setView, activeEve
 
         <LAYOUT.SIDEBAR.FOOTER>
           <NavButton active={view === 'SETTINGS'} icon={<SettingsIcon size={18} />} label="Settings" onClick={() => setView('SETTINGS')} />
-          <button 
-            onClick={logout}
-            className="flex items-center space-x-2 px-4 py-3 w-full text-left text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors mt-1 rounded-md"
-          >
-            <LogOut size={18} />
-            <span className="font-medium">Sign Out</span>
-          </button>
         </LAYOUT.SIDEBAR.FOOTER>
       </LAYOUT.SIDEBAR.CONTAINER>
   );

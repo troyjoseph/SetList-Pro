@@ -1,13 +1,11 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
-import { authService } from '../services/authService';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, pass: string) => Promise<void>;
-  signup: (email: string, pass: string) => Promise<void>;
+  login: (password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -18,33 +16,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Subscribe to Firebase Auth state changes
-    const unsubscribe = authService.subscribeToAuthChanges((currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
+    // Check local storage for existing session
+    const storedUser = localStorage.getItem('setlist_user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+    setLoading(false);
   }, []);
 
-  const login = async (email: string, pass: string) => {
-    await authService.login(email, pass);
-    // State is updated automatically by the subscription
-  };
+  const login = async (password: string) => {
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      });
 
-  const signup = async (email: string, pass: string) => {
-    await authService.signup(email, pass);
-    // State is updated automatically by the subscription
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Invalid password');
+      }
+
+      const loggedInUser = { id: 'local-user', email: 'local@setlistpro.app', name: 'Master User' };
+      setUser(loggedInUser);
+      localStorage.setItem('setlist_user', JSON.stringify(loggedInUser));
+    } catch (error: any) {
+      throw new Error(error.message || 'Login failed');
+    }
   };
 
   const logout = async () => {
-    await authService.logout();
-    // State is updated automatically by the subscription
+    setUser(null);
+    localStorage.removeItem('setlist_user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

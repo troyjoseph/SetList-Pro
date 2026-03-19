@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { COMMON } from '../../styles/common';
 import { MODAL } from '../../styles/modals';
+import { ImportReviewTableRow } from './singer/ImportReviewTableRow';
 
 export interface PendingImportItem {
   tempId: string;
@@ -13,17 +14,21 @@ export interface PendingImportItem {
   isNew: boolean;
   existingId?: string;
   isKeyProvided?: boolean;
+  matchedTitle?: string;
+  matchedArtist?: string;
+  matchedKey?: string;
 }
 
 interface ImportReviewProps {
   items: PendingImportItem[];
   onUpdateItem: (id: string, field: 'singerKey' | 'originalKey', value: string) => void;
+  onRejectMatch: (id: string) => void;
   onConfirm: () => void;
   onCancel: () => void;
   onStandardize: (setProgress: (msg: string) => void) => Promise<void>;
 }
 
-export const ImportReview: React.FC<ImportReviewProps> = ({ items, onUpdateItem, onConfirm, onCancel, onStandardize }) => {
+export const ImportReview: React.FC<ImportReviewProps> = ({ items, onUpdateItem, onRejectMatch, onConfirm, onCancel, onStandardize }) => {
   const [progress, setProgress] = useState('');
   const [isStandardizing, setIsStandardizing] = useState(false);
 
@@ -73,54 +78,17 @@ export const ImportReview: React.FC<ImportReviewProps> = ({ items, onUpdateItem,
                       <th className={MODAL.REVIEW.TH}>Singer's Key</th>
                    </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                 <tbody className="bg-white divide-y divide-gray-200">
                    {items.map((item, index) => (
-                      <tr key={item.tempId}>
-                         <td className={MODAL.REVIEW.TD}>
-                            {item.isNew ? (
-                               <span className={MODAL.REVIEW.BADGE_NEW}>New</span>
-                            ) : (
-                               <span className={MODAL.REVIEW.BADGE_EXISTING}>Matched</span>
-                            )}
-                         </td>
-                         <td className={MODAL.REVIEW.TD}>
-                            <div className="font-medium text-gray-900 truncate max-w-[200px]" title={item.title}>
-                               {item.title}
-                            </div>
-                         </td>
-                         <td className={MODAL.REVIEW.TD}>
-                            <div className="text-gray-500 truncate max-w-[150px]" title={item.artist}>
-                               {item.artist}
-                            </div>
-                         </td>
-                         <td className={MODAL.REVIEW.TD}>
-                             {item.isNew ? (
-                                 <input 
-                                   type="text"
-                                   value={item.originalKey}
-                                   onChange={(e) => onUpdateItem(item.tempId, 'originalKey', e.target.value)}
-                                   className={MODAL.REVIEW.INPUT}
-                                 />
-                             ) : (
-                                 <span className="text-gray-900 font-bold font-mono ml-2">{item.originalKey}</span>
-                             )}
-                         </td>
-                         <td className={MODAL.REVIEW.TD}>
-                             {item.isKeyProvided ? (
-                                <span className="text-gray-900 font-bold font-mono px-2" title="Key parsed from file">{item.singerKey}</span>
-                             ) : (
-                                <input 
-                                  type="text"
-                                  autoFocus={index === 0 && !item.isKeyProvided}
-                                  value={item.singerKey}
-                                  onChange={(e) => onUpdateItem(item.tempId, 'singerKey', e.target.value)}
-                                  className={MODAL.REVIEW.INPUT}
-                                />
-                             )}
-                         </td>
-                      </tr>
+                      <ImportReviewTableRow 
+                          key={item.tempId}
+                          item={item}
+                          index={index}
+                          onUpdateItem={onUpdateItem}
+                          onRejectMatch={onRejectMatch}
+                      />
                    ))}
-                </tbody>
+                 </tbody>
              </table>
           </div>
         </div>

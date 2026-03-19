@@ -1,11 +1,16 @@
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { GigType, Range, Song, Singer, EventDetails, ViewState, SpecialMoment } from '../types';
+import { GigType, Song, Singer, EventDetails, ViewState, SpecialMoment } from '../types';
 import { INITIAL_SONGS, INITIAL_SINGERS, createGigData } from '../constants';
 import { generateSetList, calculateSetStructure } from '../services/autoBuilder';
+import { useAuth } from '../contexts/AuthContext';
+import { storageService } from '../services/storageService';
 
 export const useAppLogic = () => {
+  const { user } = useAuth();
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
   // --- Navigation State ---
   const [view, setView] = useState<ViewState>(() => {
     const saved = localStorage.getItem('setlist_view_state');
@@ -13,37 +18,18 @@ export const useAppLogic = () => {
   });
 
   // --- Data State ---
-  const [songs, setSongs] = useState<Song[]>(() => {
-    const saved = localStorage.getItem('setlist_songs');
-    return saved ? JSON.parse(saved) : INITIAL_SONGS;
-  });
-
-  const [singers, setSingers] = useState<Singer[]>(() => {
-    const saved = localStorage.getItem('setlist_singers');
-    return saved ? JSON.parse(saved) : INITIAL_SINGERS;
-  });
-
-  const [events, setEvents] = useState<EventDetails[]>(() => {
-    const saved = localStorage.getItem('setlist_events_v2'); 
-    const parsed = saved ? JSON.parse(saved) : [];
-    // Migration: ensure softRequests exists on old records
-    return parsed.map((e: any) => ({
-        ...e,
-        softRequests: e.softRequests || []
-    }));
-  });
-
-  const [appDefaults, setAppDefaults] = useState(() => {
-    const saved = localStorage.getItem('setlist_app_defaults');
-    if (saved) return JSON.parse(saved);
-    return {
+  // Initial state is empty until loaded from Firestore
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [singers, setSingers] = useState<Singer[]>([]);
+  const [events, setEvents] = useState<EventDetails[]>([]);
+  
+  const [appDefaults, setAppDefaults] = useState({
       avgSongMin: 4,
       bufferSongs: 1,
       maxSlowSongsPerSet: 1,
       showTimestampsCount: 6,
       keyHighlightColor: 'yellow',
       moments: ["Father/Daughter Dance", "Mother/Son Dance", "First Dance", "Cake Cutting", "Bouquet Toss", "Entrance", "Speech Intro"]
-    };
   });
 
   const [activeEventId, setActiveEventId] = useState<string | null>(() => {
@@ -67,11 +53,64 @@ export const useAppLogic = () => {
     onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
-  // --- Persistence Effects ---
-  useEffect(() => localStorage.setItem('setlist_songs', JSON.stringify(songs)), [songs]);
-  useEffect(() => localStorage.setItem('setlist_singers', JSON.stringify(singers)), [singers]);
-  useEffect(() => localStorage.setItem('setlist_events_v2', JSON.stringify(events)), [events]);
-  useEffect(() => localStorage.setItem('setlist_app_defaults', JSON.stringify(appDefaults)), [appDefaults]);
+  // --- Persistence Effects (Firestore) ---
+  
+  // 1. Load Data on User Auth
+  useEffect(() => {
+    if (user) {
+      setIsLoadingData(true);
+      storageService.loadUserData(user.id).then(data => {
+        setSongs(data.songs);
+        setSingers(data.singers);
+        setEvents(data.events);
+        if (data.settings) setAppDefaults(data.settings);
+        setIsLoadingData(false);
+      });
+    }
+  }, [user]);
+
+  // 2. Save Data on Change (Debounced)
+  // Use refs to prevent saving during initial load
+  const isLoadedRef = useRef(false);
+  useEffect(() => {
+    if (!isLoadingData) isLoadedRef.current = true;
+  }, [isLoadingData]);
+
+  // Helper for debouncing
+  useEffect(() => {
+    if (!user || !isLoadedRef.current) return;
+    const timer = setTimeout(() => {
+      storageService.saveSongs(user.id, songs);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [songs, user]);
+
+  useEffect(() => {
+    if (!user || !isLoadedRef.current) return;
+    const timer = setTimeout(() => {
+      storageService.saveSingers(user.id, singers);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [singers, user]);
+
+  useEffect(() => {
+    if (!user || !isLoadedRef.current) return;
+    const timer = setTimeout(() => {
+      storageService.saveEvents(user.id, events);
+    }, 1000); // Events are critical, save faster
+    return () => clearTimeout(timer);
+  }, [events, user]);
+
+  useEffect(() => {
+    if (!user || !isLoadedRef.current) return;
+    const timer = setTimeout(() => {
+      storageService.saveSettings(user.id, appDefaults);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [appDefaults, user]);
+
+
+  // Navigation Persistence (Local only)
   useEffect(() => localStorage.setItem('setlist_view_state', view), [view]);
   useEffect(() => {
     if (activeEventId) {
@@ -87,7 +126,7 @@ export const useAppLogic = () => {
       if (eventViews.includes(view)) {
           if (!activeEventId) {
               setView('DASHBOARD');
-          } else {
+          } else if (!isLoadingData) {
               const exists = events.some(e => e.id === activeEventId);
               if (!exists) {
                   setActiveEventId(null);
@@ -95,7 +134,7 @@ export const useAppLogic = () => {
               }
           }
       }
-  }, [view, activeEventId, events]);
+  }, [view, activeEventId, events, isLoadingData]);
 
   // --- Derived State ---
   const currentEvent = useMemo(() => events.find(e => e.id === activeEventId) || null, [events, activeEventId]);

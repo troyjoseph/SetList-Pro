@@ -5,8 +5,8 @@ import { useAuth } from './contexts/AuthContext';
 import { AppSidebar } from './components/layout/AppSidebar';
 import { MainContent } from './components/layout/MainContent';
 import { PrintView } from './components/PrintView';
-import { AuthPage } from './components/AuthPage';
 import { SingerModal, SongModal, MomentModal, ConfirmModal } from './components/Modals';
+import { Login } from './components/Login';
 import { LAYOUT } from './styles/layout';
 import { Loader2 } from 'lucide-react';
 
@@ -23,7 +23,7 @@ export default function App() {
   }
 
   if (!user) {
-    return <AuthPage />;
+    return <Login />;
   }
   
   // Print View is special as it takes over the whole screen

@@ -9,6 +9,11 @@ import { createGigData } from '../../constants';
 import { COMMON } from '../../styles/common';
 import { MODAL } from '../../styles/modals';
 import { ImportReview, PendingImportItem } from './ImportReview';
+import { BasicInfoPanel } from './singer/BasicInfoPanel';
+import { ImportActionsPanel } from './singer/ImportActionsPanel';
+import { RepertoireListPanel } from './singer/RepertoireListPanel';
+
+import { findBestSongMatch } from '../../utils/songMatching';
 
 interface SingerModalProps {
   isOpen: boolean;
@@ -50,20 +55,24 @@ export const SingerModal: React.FC<SingerModalProps> = ({ isOpen, onClose, editi
          const newPending: PendingImportItem[] = [];
          
          rawItems.forEach(item => {
-             const existing = songs.find(s => s.title.toLowerCase() === item.title.toLowerCase());
+             const existing = findBestSongMatch(songs, item.title, item.artist);
+
              const hasSpecificKey = item.key && item.key !== 'OG' && item.key.trim() !== '';
              const key = hasSpecificKey ? item.key : '';
              
              if (existing) {
                  newPending.push({
                      tempId: uuidv4(),
-                     title: existing.title,
-                     artist: existing.artist,
+                     title: item.title, // Keep original parsed title
+                     artist: item.artist, // Keep original parsed artist
                      singerKey: key || 'OG',
                      originalKey: existing.originalKey,
                      isNew: false,
                      existingId: existing.id,
-                     isKeyProvided: hasSpecificKey
+                     isKeyProvided: hasSpecificKey,
+                     matchedTitle: existing.title,
+                     matchedArtist: existing.artist,
+                     matchedKey: existing.originalKey
                  });
              } else {
                  newPending.push({
@@ -174,6 +183,14 @@ export const SingerModal: React.FC<SingerModalProps> = ({ isOpen, onClose, editi
         ));
     };
 
+    const handleRejectMatch = (tempId: string) => {
+        setPendingImports(prev => prev.map(item => 
+            item.tempId === tempId 
+                ? { ...item, isNew: true, existingId: undefined, matchedTitle: undefined, matchedArtist: undefined, matchedKey: undefined } 
+                : item
+        ));
+    };
+
     const handleConfirmImport = () => {
         const newSongs: Song[] = [];
         const updatedRepertoire = { ...(editingSinger.repertoire || {}) };
@@ -210,6 +227,7 @@ export const SingerModal: React.FC<SingerModalProps> = ({ isOpen, onClose, editi
             <ImportReview 
                 items={pendingImports}
                 onUpdateItem={handleUpdatePendingItem}
+                onRejectMatch={handleRejectMatch}
                 onConfirm={handleConfirmImport}
                 onCancel={() => setPendingImports([])}
                 onStandardize={handleStandardize}
@@ -225,77 +243,25 @@ export const SingerModal: React.FC<SingerModalProps> = ({ isOpen, onClose, editi
               <button onClick={onClose}><X size={24} className="text-gray-400 hover:text-gray-600" /></button>
             </div>
             <div className={MODAL.BODY}>
-              <div className={MODAL.GRID_COL_2}>
-                <div>
-                  <COMMON.LABEL>Name</COMMON.LABEL>
-                  <COMMON.INPUT.BASE type="text" value={editingSinger.name || ''} onChange={e => setEditingSinger({ ...editingSinger, name: e.target.value })} autoFocus />
-                </div>
-                <div>
-                  <COMMON.LABEL>Vocal Range</COMMON.LABEL>
-                  <COMMON.INPUT.SELECT value={editingSinger.range || Range.UNSPECIFIED} onChange={e => setEditingSinger({ ...editingSinger, range: e.target.value as Range })}>
-                    {Object.values(Range).map(r => <option key={r} value={r}>{r}</option>)}
-                  </COMMON.INPUT.SELECT>
-                </div>
-              </div>
+              <BasicInfoPanel editingSinger={editingSinger} setEditingSinger={setEditingSinger} />
 
               <div>
-                <div className={MODAL.IMPORT.WRAPPER}>
-                  <COMMON.LABEL>Repertoire ({Object.keys(editingSinger.repertoire || {}).length} songs)</COMMON.LABEL>
-                  <div className={MODAL.IMPORT.ACTIONS}>
-                    <label className={MODAL.IMPORT.BTN_AI}>
-                        <Sparkles size={12} className="mr-1" /> Import w/ AI
-                        <input type="file" accept=".txt,.csv" ref={aiFileInputRef} onChange={handleImportRepertoireWithGemini} className="hidden" />
-                    </label>
-                    <label className={MODAL.IMPORT.BTN_CSV}>
-                        <FileDown size={12} className="mr-1" /> Import CSV
-                        <input type="file" accept=".csv" ref={fileInputRef} onChange={handleImportRepertoire} className="hidden" />
-                    </label>
-                  </div>
-                </div>
-                {isProcessingAI && (
-                    <div className={MODAL.IMPORT.LOADER}>
-                        <Loader2 size={12} className="animate-spin mr-2"/> AI is reading your file...
-                    </div>
-                )}
-                <COMMON.INPUT.SEARCH_WRAPPER className="mb-2">
-                   <COMMON.INPUT.SEARCH_ICON><Search size={16} /></COMMON.INPUT.SEARCH_ICON>
-                   <COMMON.INPUT.SEARCH_FIELD type="text" placeholder="Search to add/remove songs..." value={repertoireSearch} onChange={e => setRepertoireSearch(e.target.value)} />
-                </COMMON.INPUT.SEARCH_WRAPPER>
-                <div className={MODAL.LIST.CONTAINER}>
-                  {songs
-                    .filter(s => s.title.toLowerCase().includes(repertoireSearch.toLowerCase()) || s.artist.toLowerCase().includes(repertoireSearch.toLowerCase()))
-                    .map(song => {
-                      const isKnown = editingSinger.repertoire && editingSinger.repertoire[song.id];
-                      return (
-                        <div key={song.id} className={MODAL.SONG_ITEM(!!isKnown)}>
-                          <div className={MODAL.LIST.ITEM_CONTENT} onClick={() => toggleSongInRepertoire(song)}>
-                             <div className={MODAL.CHECK_BOX(!!isKnown)}>
-                               {isKnown && <Check size={12} className="text-white" />}
-                             </div>
-                             <div className="truncate">
-                               <div className={MODAL.LIST.TEXT_MAIN}>{song.title}</div>
-                               <div className={MODAL.LIST.TEXT_SUB}>{song.artist}</div>
-                             </div>
-                          </div>
-                          {isKnown && (
-                             <div className={MODAL.LIST.KEY_EDIT}>
-                               {editingSinger.repertoire![song.id] === 'OG' && (
-                                   <span className={MODAL.LIST.KEY_BADGE} title={`Original Key: ${song.originalKey}`}>({song.originalKey})</span>
-                               )}
-                               <input 
-                                 type="text" 
-                                 value={editingSinger.repertoire![song.id]} 
-                                 onChange={(e) => updateRepertoireKey(song.id, e.target.value)}
-                                 className={MODAL.LIST.KEY_INPUT}
-                                 placeholder="Key"
-                                 onClick={(e) => e.stopPropagation()}
-                               />
-                             </div>
-                          )}
-                        </div>
-                      );
-                  })}
-                </div>
+                <ImportActionsPanel 
+                    editingSinger={editingSinger}
+                    aiFileInputRef={aiFileInputRef}
+                    fileInputRef={fileInputRef}
+                    isProcessingAI={isProcessingAI}
+                    handleImportRepertoireWithGemini={handleImportRepertoireWithGemini}
+                    handleImportRepertoire={handleImportRepertoire}
+                />
+                <RepertoireListPanel 
+                    songs={songs}
+                    editingSinger={editingSinger}
+                    repertoireSearch={repertoireSearch}
+                    setRepertoireSearch={setRepertoireSearch}
+                    toggleSongInRepertoire={toggleSongInRepertoire}
+                    updateRepertoireKey={updateRepertoireKey}
+                />
               </div>
             </div>
             <div className={MODAL.FOOTER}>

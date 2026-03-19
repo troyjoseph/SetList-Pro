@@ -4,6 +4,10 @@ import { Song, GigType, SetPreference, Singer } from '../../types';
 import { StarRating } from '../Shared';
 import { COMMON } from '../../styles/common';
 import { MODAL } from '../../styles/modals';
+import { TransitionsPanel } from './song/TransitionsPanel';
+import { PreferredSingersPanel } from './song/PreferredSingersPanel';
+import { BasicInfoPanel } from './song/BasicInfoPanel';
+import { GigDataPanel } from './song/GigDataPanel';
 
 interface SongModalProps {
   isOpen: boolean;
@@ -75,20 +79,7 @@ export const SongModal: React.FC<SongModalProps> = ({ isOpen, onClose, editingSo
               <button onClick={onClose}><X size={24} className="text-gray-400 hover:text-gray-600" /></button>
             </div>
             <div className={MODAL.BODY}>
-               <div className={MODAL.GRID_3}>
-                 <div className={MODAL.COL_SPAN_2}>
-                    <COMMON.LABEL>Title</COMMON.LABEL>
-                    <COMMON.INPUT.BASE type="text" value={editingSong.title || ''} onChange={e => setEditingSong({ ...editingSong, title: e.target.value })} />
-                 </div>
-                 <div>
-                    <COMMON.LABEL>Original Key</COMMON.LABEL>
-                    <COMMON.INPUT.BASE type="text" value={editingSong.originalKey || ''} onChange={e => setEditingSong({ ...editingSong, originalKey: e.target.value })} />
-                 </div>
-                 <div className={MODAL.COL_SPAN_3}>
-                    <COMMON.LABEL>Artist</COMMON.LABEL>
-                    <COMMON.INPUT.BASE type="text" value={editingSong.artist || ''} onChange={e => setEditingSong({ ...editingSong, artist: e.target.value })} />
-                 </div>
-               </div>
+               <BasicInfoPanel editingSong={editingSong} setEditingSong={setEditingSong} />
 
                <div>
                  <div className="border-b flex space-x-6 mb-4">
@@ -98,125 +89,29 @@ export const SongModal: React.FC<SongModalProps> = ({ isOpen, onClose, editingSo
                  </div>
                  {editingSong.gigData && editingSong.gigData[activeGigTypeTab] && (
                    <div className={MODAL.CONTENT_BOX}>
-                      <div className={MODAL.FLEX_BETWEEN}>
-                         <label className={MODAL.FONT_MEDIUM}>Rating for {activeGigTypeTab}</label>
-                         <StarRating rating={editingSong.gigData[activeGigTypeTab].rating} onChange={(r) => { const gd = { ...editingSong.gigData }; gd![activeGigTypeTab].rating = r; setEditingSong({ ...editingSong, gigData: gd }); }} />
-                      </div>
-                      <div className={MODAL.CHECKBOX_WRAPPER}>
-                        <label className={MODAL.CHECKBOX_LABEL}>
-                          <input type="checkbox" checked={editingSong.gigData[activeGigTypeTab].isSlow} onChange={e => { const gd = { ...editingSong.gigData }; gd![activeGigTypeTab].isSlow = e.target.checked; setEditingSong({ ...editingSong, gigData: gd }); }} className={MODAL.CHECKBOX_INPUT} />
-                          <span className={MODAL.CHECKBOX_TEXT}>Slow Song</span>
-                        </label>
-                        <label className={MODAL.CHECKBOX_LABEL}>
-                          <input type="checkbox" checked={editingSong.gigData[activeGigTypeTab].isDuet} onChange={e => { const gd = { ...editingSong.gigData }; gd![activeGigTypeTab].isDuet = e.target.checked; setEditingSong({ ...editingSong, gigData: gd }); }} className={MODAL.CHECKBOX_INPUT} />
-                          <span className={MODAL.CHECKBOX_TEXT}>Duet</span>
-                        </label>
-                      </div>
-                      <div className={MODAL.GRID_COL_2}>
-                        <div>
-                           <label className={MODAL.SELECT_LABEL}>Preferred Set</label>
-                           <select value={editingSong.gigData[activeGigTypeTab].preferredSets} onChange={e => { const gd = { ...editingSong.gigData }; gd![activeGigTypeTab].preferredSets = e.target.value as SetPreference; setEditingSong({ ...editingSong, gigData: gd }); }} className={MODAL.SELECT_INPUT}>
-                              {['ANY', 'FIRST', 'FIRST_TWO', 'LAST', 'LAST_TWO'].map(o => <option key={o} value={o}>{o.replace('_', ' ')}</option>)}
-                           </select>
-                        </div>
-                        <div>
-                           <label className={MODAL.SELECT_LABEL}>Avoid Set</label>
-                           <select value={editingSong.gigData[activeGigTypeTab].setsToAvoid} onChange={e => { const gd = { ...editingSong.gigData }; gd![activeGigTypeTab].setsToAvoid = e.target.value as SetPreference; setEditingSong({ ...editingSong, gigData: gd }); }} className={MODAL.SELECT_INPUT}>
-                              {['ANY', 'FIRST', 'FIRST_TWO', 'LAST', 'LAST_TWO'].map(o => <option key={o} value={o}>{o.replace('_', ' ')}</option>)}
-                           </select>
-                        </div>
-                      </div>
+                      <GigDataPanel activeGigTypeTab={activeGigTypeTab} editingSong={editingSong} setEditingSong={setEditingSong} />
                       
-                      <div className={MODAL.TRANSITIONS.BORDER}>
-                          <COMMON.LABEL className="mb-2">Preferred Singers (Auto-fill Priority)</COMMON.LABEL>
-                          <div className={MODAL.TRANSITIONS.INPUT_WRAPPER}>
-                            <input 
-                                type="text" 
-                                placeholder="Search singer to add..." 
-                                value={singerSearch} 
-                                onChange={e => setSingerSearch(e.target.value)} 
-                                className={MODAL.TRANSITIONS.INPUT}
-                            />
-                            {singerSearch && (
-                                <div className={MODAL.TRANSITIONS.DROPDOWN}>
-                                    {singers
-                                        .filter(s => s.name.toLowerCase().includes(singerSearch.toLowerCase()))
-                                        .filter(s => !(editingSong.gigData![activeGigTypeTab].preferredSingers || []).includes(s.id))
-                                        .map(s => (
-                                            <div key={s.id} onClick={() => handleAddPreferredSinger(s.id)} className={MODAL.TRANSITIONS.ITEM}>
-                                                {s.name}
-                                            </div>
-                                        ))
-                                    }
-                                </div>
-                            )}
-                          </div>
-                          <div className={MODAL.TRANSITIONS.TAGS}>
-                            {(editingSong.gigData[activeGigTypeTab].preferredSingers || []).map(sid => {
-                                const s = singers.find(x => x.id === sid);
-                                return (
-                                    <span key={sid} className={MODAL.TRANSITIONS.TAG('purple' as any)}>
-                                        {s?.name || 'Unknown'} 
-                                        <button onClick={() => handleRemovePreferredSinger(sid)} className={MODAL.TRANSITIONS.CLOSE('purple' as any)}>
-                                            <X size={12}/>
-                                        </button>
-                                    </span>
-                                )
-                            })}
-                          </div>
-                      </div>
+                      <PreferredSingersPanel 
+                          activeGigTypeTab={activeGigTypeTab}
+                          editingSong={editingSong}
+                          singers={singers}
+                          singerSearch={singerSearch}
+                          setSingerSearch={setSingerSearch}
+                          handleAddPreferredSinger={handleAddPreferredSinger}
+                          handleRemovePreferredSinger={handleRemovePreferredSinger}
+                      />
 
-                      <div className={MODAL.TRANSITIONS.BORDER}>
-                          <COMMON.LABEL className="mb-2">Transitions</COMMON.LABEL>
-                          <div className={MODAL.TRANSITIONS.GRID}>
-                             <div>
-                                <h4 className={MODAL.TRANSITIONS.TITLE}>Good Transition TO (Next)</h4>
-                                <div className={MODAL.TRANSITIONS.INPUT_WRAPPER}>
-                                    <input type="text" placeholder="Add song..." value={transitionToSearch} onChange={e => setTransitionToSearch(e.target.value)} className={MODAL.TRANSITIONS.INPUT}/>
-                                    {transitionToSearch && (
-                                        <div className={MODAL.TRANSITIONS.DROPDOWN}>
-                                            {songs.filter(s => s.title.toLowerCase().includes(transitionToSearch.toLowerCase())).slice(0,5).map(s => (
-                                                <div key={s.id} onClick={() => handleAddTransition('TO', s.id)} className={MODAL.TRANSITIONS.ITEM}>{s.title}</div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className={MODAL.TRANSITIONS.TAGS}>
-                                    {editingSong.gigData[activeGigTypeTab].goodTransitionTo.map(id => {
-                                        const s = songs.find(x => x.id === id);
-                                        return (
-                                            <span key={id} className={MODAL.TRANSITIONS.TAG('green')}>
-                                                {s?.title || 'Unknown'} <button onClick={() => handleRemoveTransition('TO', id)} className={MODAL.TRANSITIONS.CLOSE('green')}><X size={12}/></button>
-                                            </span>
-                                        );
-                                    })}
-                                </div>
-                             </div>
-                             <div>
-                                <h4 className={MODAL.TRANSITIONS.TITLE}>Good Transition FROM (Prev)</h4>
-                                <div className={MODAL.TRANSITIONS.INPUT_WRAPPER}>
-                                    <input type="text" placeholder="Add song..." value={transitionFromSearch} onChange={e => setTransitionFromSearch(e.target.value)} className={MODAL.TRANSITIONS.INPUT}/>
-                                    {transitionFromSearch && (
-                                        <div className={MODAL.TRANSITIONS.DROPDOWN}>
-                                            {songs.filter(s => s.title.toLowerCase().includes(transitionFromSearch.toLowerCase())).slice(0,5).map(s => (
-                                                <div key={s.id} onClick={() => handleAddTransition('FROM', s.id)} className={MODAL.TRANSITIONS.ITEM}>{s.title}</div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className={MODAL.TRANSITIONS.TAGS}>
-                                    {editingSong.gigData[activeGigTypeTab].goodTransitionFrom.map(id => {
-                                        const s = songs.find(x => x.id === id);
-                                        return (
-                                            <span key={id} className={MODAL.TRANSITIONS.TAG('blue')}>
-                                                {s?.title || 'Unknown'} <button onClick={() => handleRemoveTransition('FROM', id)} className={MODAL.TRANSITIONS.CLOSE('blue')}><X size={12}/></button>
-                                            </span>
-                                        );
-                                    })}
-                                </div>
-                             </div>
-                          </div>
-                      </div>
+                      <TransitionsPanel 
+                          activeGigTypeTab={activeGigTypeTab}
+                          editingSong={editingSong}
+                          songs={songs}
+                          transitionToSearch={transitionToSearch}
+                          setTransitionToSearch={setTransitionToSearch}
+                          transitionFromSearch={transitionFromSearch}
+                          setTransitionFromSearch={setTransitionFromSearch}
+                          handleAddTransition={handleAddTransition}
+                          handleRemoveTransition={handleRemoveTransition}
+                      />
                    </div>
                  )}
                </div>
