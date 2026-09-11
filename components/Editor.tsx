@@ -194,13 +194,14 @@ export const Editor: React.FC<EditorProps> = ({
                     <X size={20} />
                 </button>
             </div>
-            <Sidebar 
-                songs={availableSongs} 
-                activeSingers={activeSingers} 
-                gigType={event.gigType} 
-                onAddSong={onAddSong} 
-                isAddingSong={isAddingSong} 
-                onDragStart={handleDragStart} 
+            <Sidebar
+                songs={availableSongs}
+                activeSingers={activeSingers}
+                gigType={event.gigType}
+                onAddSong={onAddSong}
+                isAddingSong={isAddingSong}
+                onDragStart={handleDragStart}
+                onEditSong={onEditSong}
             />
         </div>
 
@@ -227,9 +228,10 @@ export const Editor: React.FC<EditorProps> = ({
                     songs={songs} 
                     allSingers={allSingers} 
                     activeSingers={activeSingers} 
-                    onOpenModal={onOpenMomentModal} 
-                    onUpdateSinger={updateSpecialMomentSinger} 
-                    onRemove={removeSpecialMoment} 
+                    onOpenModal={onOpenMomentModal}
+                    onUpdateSinger={updateSpecialMomentSinger}
+                    onRemove={removeSpecialMoment}
+                    onEditSong={onEditSong}
                  />
 
                  {event.sets.map((set, setIndex) => (

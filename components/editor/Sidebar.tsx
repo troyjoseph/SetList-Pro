@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Singer, DragPayload, GigType, AvailableSong } from '../../types';
+import { Singer, Song, DragPayload, GigType, AvailableSong } from '../../types';
 import { EDITOR } from '../../styles/editor';
 import { SidebarHeader } from './sidebar/SidebarHeader';
 import { SidebarQuickAdd } from './sidebar/SidebarQuickAdd';
@@ -12,6 +12,7 @@ interface SidebarProps {
   onAddSong: (title: string, matchMusicBrainz?: boolean) => void;
   isAddingSong: boolean;
   onDragStart: (e: React.DragEvent, type: 'NEW', data: DragPayload) => void;
+  onEditSong?: (song: Song) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -21,6 +22,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onAddSong,
   isAddingSong,
   onDragStart,
+  onEditSong,
 }) => {
   const [filter, setFilter] = useState('');
   const [singerFilter, setSingerFilter] = useState('ALL');
@@ -109,6 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               isInSet={isInSet}
               gigType={gigType}
               onDragStart={onDragStart}
+              onEditSong={onEditSong}
             />
           );
         })}

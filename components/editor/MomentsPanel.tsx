@@ -12,9 +12,10 @@ interface MomentsPanelProps {
   onOpenModal: () => void;
   onUpdateSinger: (momentId: string, singerId: string) => void;
   onRemove: (id: string) => void;
+  onEditSong?: (song: Song) => void;
 }
 
-export const MomentsPanel: React.FC<MomentsPanelProps> = ({ moments, songs, allSingers, activeSingers, onOpenModal, onUpdateSinger, onRemove }) => (
+export const MomentsPanel: React.FC<MomentsPanelProps> = ({ moments, songs, allSingers, activeSingers, onOpenModal, onUpdateSinger, onRemove, onEditSong }) => (
  <div className={EDITOR.MOMENTS.CONTAINER}>
     <div className={EDITOR.MOMENTS.HEADER}>
        <h3 className={EDITOR.MOMENTS.TITLE}><Star size={18} className="mr-2 text-purple-500"/> Special Moments</h3>
@@ -35,6 +36,7 @@ export const MomentsPanel: React.FC<MomentsPanelProps> = ({ moments, songs, allS
                     allSingers={allSingers}
                     onUpdateSinger={(sid) => onUpdateSinger(moment.id, sid)}
                     onRemove={() => onRemove(moment.id)}
+                    onEditSong={onEditSong}
                 />
              );
           })}

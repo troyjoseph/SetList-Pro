@@ -12,9 +12,10 @@ interface MomentItemProps {
   allSingers: Singer[];
   onUpdateSinger: (singerId: string) => void;
   onRemove: () => void;
+  onEditSong?: (song: Song) => void;
 }
 
-export const MomentItem: React.FC<MomentItemProps> = ({ moment, song, activeSingers, allSingers, onUpdateSinger, onRemove }) => {
+export const MomentItem: React.FC<MomentItemProps> = ({ moment, song, activeSingers, allSingers, onUpdateSinger, onRemove, onEditSong }) => {
     let currentKey = song?.originalKey || '';
     if (moment.assignedSingerId && song) {
        const assignedSinger = allSingers.find(s => s.id === moment.assignedSingerId);
@@ -29,6 +30,7 @@ export const MomentItem: React.FC<MomentItemProps> = ({ moment, song, activeSing
             title={song?.title || 'Unknown Song'}
             subtitle={`${moment.momentName} • ${song?.artist || ''}`}
             leftIcon={<div className={EDITOR.ROW.ICON_BOX}><Music size={16}/></div>}
+            onTitleClick={song && onEditSong ? () => onEditSong(song) : undefined}
             rightControls={
                 <>
                   {song && (

@@ -22,8 +22,10 @@ export const EDITOR_SIDEBAR = {
   // Card internals
   CARD_HEADER: "flex justify-between items-start",
   CARD_TITLE: "font-medium text-gray-900 line-clamp-1",
+  CARD_TITLE_BTN: "font-medium text-gray-900 line-clamp-1 text-left hover:text-indigo-600 hover:underline decoration-dotted underline-offset-2 transition-colors",
   CARD_RATING: "flex",
   CARD_ARTIST: "text-xs text-gray-500 mb-1",
+  CARD_ARTIST_BTN: "text-xs text-gray-500 mb-1 text-left hover:text-indigo-500 hover:underline decoration-dotted underline-offset-2 transition-colors block",
   CARD_TAGS: "flex flex-wrap gap-1 mt-1",
   CARD_TAG: (isPreferred: boolean) => `px-1.5 py-0.5 rounded text-[10px] border ${isPreferred ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-600'}`
 };

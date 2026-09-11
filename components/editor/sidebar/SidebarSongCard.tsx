@@ -10,6 +10,7 @@ interface SidebarSongCardProps {
   isInSet: boolean;
   gigType: GigType;
   onDragStart: (e: React.DragEvent, type: 'NEW', data: DragPayload) => void;
+  onEditSong?: (song: Song) => void;
 }
 
 export const SidebarSongCard: React.FC<SidebarSongCardProps> = ({
@@ -18,6 +19,7 @@ export const SidebarSongCard: React.FC<SidebarSongCardProps> = ({
   isInSet,
   gigType,
   onDragStart,
+  onEditSong,
 }) => {
   const preferredSinger = singers.find(s => s.isPreferred) || singers[0];
   const gigData = song.gigData[gigType];
@@ -35,7 +37,18 @@ export const SidebarSongCard: React.FC<SidebarSongCardProps> = ({
     >
       <div className={EDITOR.SIDEBAR.CARD_HEADER}>
         <div className="flex items-center gap-1 min-w-0 pr-2">
-          <div className={EDITOR.SIDEBAR.CARD_TITLE} title={song.title}>{song.title}</div>
+          {onEditSong ? (
+            <button
+              type="button"
+              onClick={e => { e.stopPropagation(); onEditSong(song); }}
+              className={EDITOR.SIDEBAR.CARD_TITLE_BTN}
+              title="Edit song details"
+            >
+              {song.title}
+            </button>
+          ) : (
+            <div className={EDITOR.SIDEBAR.CARD_TITLE} title={song.title}>{song.title}</div>
+          )}
           {isInSet && (
             <span className={EDITOR.SIDEBAR.IN_SET_BADGE}>In Set</span>
           )}
@@ -48,7 +61,18 @@ export const SidebarSongCard: React.FC<SidebarSongCardProps> = ({
           </div>
         )}
       </div>
-      <div className={EDITOR.SIDEBAR.CARD_ARTIST}>{song.artist}</div>
+      {onEditSong ? (
+        <button
+          type="button"
+          onClick={e => { e.stopPropagation(); onEditSong(song); }}
+          className={EDITOR.SIDEBAR.CARD_ARTIST_BTN}
+          title="Edit song details"
+        >
+          {song.artist}
+        </button>
+      ) : (
+        <div className={EDITOR.SIDEBAR.CARD_ARTIST}>{song.artist}</div>
+      )}
       <div className={EDITOR.SIDEBAR.CARD_TAGS}>
         {singers.map(item => (
           <span
