@@ -239,6 +239,11 @@ export const useAppLogic = () => {
     const newEvent: EventDetails = {
       id: uuidv4(), name: 'New Event', date: new Date().toISOString().split('T')[0], gigType: GigType.WEDDING, startTime: '', endTime: '',
       numberOfSets: 3, setLengthType: 'TIME', minutesPerSet: 45, selectedSingerIds: singers.map(s => s.id), sets: [],
+      setConfigs: [
+        { name: 'Set 1', targetMinutes: 45, targetSongs: 10 },
+        { name: 'Set 2', targetMinutes: 45, targetSongs: 10 },
+        { name: 'Set 3', targetMinutes: 45, targetSongs: 10 }
+      ],
       specialMoments: [], mustPlay: [], softRequests: [], doNotPlay: [], singerQuotas: {},
       settings: { ...appDefaults }
     };

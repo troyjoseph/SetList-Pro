@@ -60,3 +60,5 @@ export const EVENT_SETUP = {
   
   FOOTER_BTN_WRAPPER: "mt-8 flex justify-end"
 };
+
+export { SET_STRUCTURE_STYLES } from './eventSetup/setStructure';

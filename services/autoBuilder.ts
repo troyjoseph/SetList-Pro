@@ -13,18 +13,23 @@ export const calculateSetStructure = (event: EventDetails): EventSet[] => {
   const oldSets = event.sets || [];
 
   for (let i = 0; i < event.numberOfSets; i++) {
+    const existingSet = oldSets[i];
+    const setConfig = event.setConfigs?.[i];
+
+    const targetMinutes = setConfig?.targetMinutes ?? existingSet?.targetMinutes ?? event.minutesPerSet ?? 45;
+    const targetSongs = setConfig?.targetSongs ?? existingSet?.targetSongs ?? event.songsPerSet ?? 10;
+    const setName = setConfig?.name || existingSet?.name || `Set ${i + 1}`;
+
     let slotCount = 0;
 
     if (event.setLengthType === 'SONG_COUNT') {
-      slotCount = event.songsPerSet || 10;
+      slotCount = targetSongs;
     } else {
       // Time based
-      const minutes = event.minutesPerSet || 45;
-      slotCount = Math.ceil(minutes / avgSongLength) + (event.settings.bufferSongs || 0);
+      slotCount = Math.ceil(targetMinutes / avgSongLength) + (event.settings.bufferSongs || 0);
     }
 
     const slots: SetListSlot[] = [];
-    const existingSet = oldSets[i];
 
     for (let j = 0; j < slotCount; j++) {
       if (existingSet && existingSet.slots[j]) {
@@ -42,7 +47,9 @@ export const calculateSetStructure = (event: EventDetails): EventSet[] => {
 
     sets.push({
       id: existingSet ? existingSet.id : uuidv4(),
-      name: existingSet ? existingSet.name : `Set ${i + 1}`,
+      name: setName,
+      targetMinutes,
+      targetSongs,
       slots
     });
   }

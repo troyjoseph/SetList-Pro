@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { Search, Loader2, Plus, Star } from 'lucide-react';
-import { Song, Singer, GigType, DragPayload } from '../../types';
-import { COMMON } from '../../styles/common';
+import React, { useState, useMemo } from 'react';
+import { Singer, DragPayload, GigType, AvailableSong } from '../../types';
 import { EDITOR } from '../../styles/editor';
+import { SidebarHeader } from './sidebar/SidebarHeader';
+import { SidebarQuickAdd } from './sidebar/SidebarQuickAdd';
+import { SidebarSongCard } from './sidebar/SidebarSongCard';
 
 interface SidebarProps {
-  songs: { song: Song; singers: { singer: Singer; key: string; isPreferred: boolean; note?: string }[] }[];
+  songs: AvailableSong[];
   activeSingers: Singer[];
   gigType: GigType;
   onAddSong: (title: string, matchMusicBrainz?: boolean) => void;
@@ -13,111 +14,113 @@ interface SidebarProps {
   onDragStart: (e: React.DragEvent, type: 'NEW', data: DragPayload) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ songs, activeSingers, gigType, onAddSong, isAddingSong, onDragStart }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  songs,
+  activeSingers,
+  gigType,
+  onAddSong,
+  isAddingSong,
+  onDragStart,
+}) => {
   const [filter, setFilter] = useState('');
   const [singerFilter, setSingerFilter] = useState('ALL');
   const [quickAdd, setQuickAdd] = useState('');
   const [matchMusicBrainz, setMatchMusicBrainz] = useState(false);
+  const [showUsedSongs, setShowUsedSongs] = useState(false);
 
-  const filteredList = songs.filter(({ song, singers }) => {
-      const matchesText = song.title.toLowerCase().includes(filter.toLowerCase()) || song.artist.toLowerCase().includes(filter.toLowerCase());
-      const matchesSinger = singerFilter === 'ALL' || singers.some(s => s.singer.id === singerFilter);
+  // Remaining counts for each singer (only counting songs not in set)
+  const singerCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    let totalAvailable = 0;
+
+    songs.forEach(({ singers, isInSet }) => {
+      if (!isInSet) {
+        totalAvailable++;
+        singers.forEach(s => {
+          counts[s.singer.id] = (counts[s.singer.id] || 0) + 1;
+        });
+      }
+    });
+
+    return { counts, totalAvailable };
+  }, [songs]);
+
+  const totalUsedCount = useMemo(() => {
+    return songs.filter(s => s.isInSet).length;
+  }, [songs]);
+
+  const filteredList = useMemo(() => {
+    return songs.filter(({ song, singers, isInSet }) => {
+      // By default, once a song is added to the set, it disappears from all singers' lists
+      if (!showUsedSongs && isInSet) return false;
+
+      const matchesText =
+        song.title.toLowerCase().includes(filter.toLowerCase()) ||
+        song.artist.toLowerCase().includes(filter.toLowerCase());
+      const matchesSinger =
+        singerFilter === 'ALL' || singers.some(s => s.singer.id === singerFilter);
+
       return matchesText && matchesSinger;
-  });
+    });
+  }, [songs, showUsedSongs, filter, singerFilter]);
+
+  const handleQuickAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickAdd.trim()) return;
+    onAddSong(quickAdd.trim(), matchMusicBrainz);
+    setQuickAdd('');
+  };
 
   return (
     <div className={EDITOR.SIDEBAR.CONTAINER}>
-       <div className={EDITOR.SIDEBAR.HEADER}>
-          <h2 className={EDITOR.SIDEBAR.TITLE}>Available Songs</h2>
-          
-          <COMMON.INPUT.SEARCH_WRAPPER className="mb-3">
-             <COMMON.INPUT.SEARCH_ICON><Search size={16}/></COMMON.INPUT.SEARCH_ICON>
-             <input 
-               type="text" 
-               placeholder="Search..." 
-               value={filter}
-               onChange={e => setFilter(e.target.value)}
-               className={EDITOR.SIDEBAR.SEARCH_INPUT}
-             />
-          </COMMON.INPUT.SEARCH_WRAPPER>
+      <SidebarHeader
+        filter={filter}
+        setFilter={setFilter}
+        singerFilter={singerFilter}
+        setSingerFilter={setSingerFilter}
+        activeSingers={activeSingers}
+        singerCounts={singerCounts}
+        showUsedSongs={showUsedSongs}
+        setShowUsedSongs={setShowUsedSongs}
+        totalUsedCount={totalUsedCount}
+      />
 
-          <select 
-             value={singerFilter} 
-             onChange={e => setSingerFilter(e.target.value)}
-             className={EDITOR.SIDEBAR.SELECT}
-          >
-             <option value="ALL">All Active Singers</option>
-             {activeSingers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-       </div>
-       
-       <div className={EDITOR.SIDEBAR.LIST}>
-         <div className={EDITOR.SIDEBAR.QUICK_ADD_CONTAINER}>
-           <div className="flex flex-col gap-2 w-full">
-             <div className={EDITOR.SIDEBAR.QUICK_ADD_WRAPPER}>
-               <input 
-                 type="text" 
-                 value={quickAdd} 
-                 onChange={e => setQuickAdd(e.target.value)}
-                 onKeyDown={e => e.key === 'Enter' && onAddSong(quickAdd, matchMusicBrainz)}
-                 placeholder="Quick add new song..."
-                 className={EDITOR.SIDEBAR.QUICK_ADD_INPUT}
-               />
-               <button 
-                 onClick={() => onAddSong(quickAdd, matchMusicBrainz)}
-                 disabled={isAddingSong}
-                 className={EDITOR.SIDEBAR.QUICK_ADD_BTN}
-               >
-                 {isAddingSong ? <Loader2 size={16} className={EDITOR.SIDEBAR.LOADER_ICON}/> : <Plus size={16}/>}
-               </button>
-             </div>
-             <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
-               <input 
-                 type="checkbox" 
-                 checked={matchMusicBrainz} 
-                 onChange={(e) => setMatchMusicBrainz(e.target.checked)} 
-                 className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-               />
-               Match against MusicBrainz
-             </label>
-           </div>
-         </div>
+      <div className={EDITOR.SIDEBAR.LIST}>
+        <SidebarQuickAdd
+          quickAdd={quickAdd}
+          setQuickAdd={setQuickAdd}
+          matchMusicBrainz={matchMusicBrainz}
+          setMatchMusicBrainz={setMatchMusicBrainz}
+          isAddingSong={isAddingSong}
+          onSubmit={handleQuickAdd}
+        />
 
-         {filteredList.map(({song, singers: songSingers}) => {
-              const gigData = song.gigData[gigType];
-              const defaultSinger = songSingers[0]; 
+        {filteredList.map(({ song, singers, isInSet }) => {
+          const songSingers =
+            singerFilter === 'ALL'
+              ? singers
+              : singers.filter(s => s.singer.id === singerFilter);
 
-              return (
-                <div 
-                  key={song.id}
-                  draggable
-                  onDragStart={(e) => onDragStart(e, 'NEW', { songId: song.id, singerId: defaultSinger.singer.id, key: defaultSinger.key, note: defaultSinger.note })}
-                  className={EDITOR.SIDEBAR.SONG_CARD}
-                >
-                   <div className={EDITOR.SIDEBAR.CARD_HEADER}>
-                      <div className={EDITOR.SIDEBAR.CARD_TITLE}>{song.title}</div>
-                      {gigData?.rating > 0 && (
-                        <div className={EDITOR.SIDEBAR.CARD_RATING}>
-                          {[...Array(gigData.rating)].map((_, i) => <Star key={i} size={10} className={COMMON.STAR.ICON(true)} />)}
-                        </div>
-                      )}
-                   </div>
-                   <div className={EDITOR.SIDEBAR.CARD_ARTIST}>{song.artist}</div>
-                   <div className={EDITOR.SIDEBAR.CARD_TAGS}>
-                      {songSingers.map(item => (
-                         <span 
-                           key={item.singer.id} 
-                           className={EDITOR.SIDEBAR.CARD_TAG(item.isPreferred)}
-                           title={`Key: ${item.key}`}
-                         >
-                            {item.singer.name.split(' ')[0]} ({item.key})
-                         </span>
-                      ))}
-                   </div>
-                </div>
-              );
-         })}
-       </div>
+          return (
+            <SidebarSongCard
+              key={song.id}
+              song={song}
+              singers={songSingers}
+              isInSet={isInSet}
+              gigType={gigType}
+              onDragStart={onDragStart}
+            />
+          );
+        })}
+
+        {filteredList.length === 0 && (
+          <div className={EDITOR.SIDEBAR.EMPTY_STATE}>
+            {filter || singerFilter !== 'ALL'
+              ? 'No matching available songs found'
+              : 'All songs for active singers are currently used in the set'}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

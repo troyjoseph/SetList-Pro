@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Menu, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import { EventDetails, Song, Singer, DragPayload, ViewState, SetListSlot } from '../types';
+import { EventDetails, Song, Singer, DragPayload, ViewState, SetListSlot, AvailableSong } from '../types';
 import { EDITOR } from '../styles/editor';
 import { Sidebar } from './editor/Sidebar';
 import { Toolbar } from './editor/Toolbar';
@@ -29,9 +29,24 @@ export const Editor: React.FC<EditorProps> = ({
 }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
     
-    const availableSongs = useMemo(() => {
-        const map = new Map<string, any>();
+    const availableSongs = useMemo<AvailableSong[]>(() => {
+        const map = new Map<string, AvailableSong>();
         
+        // Collect all song IDs currently used in sets or special moments
+        const songsInSets = new Set<string>();
+        event.sets?.forEach(set => {
+            set.slots?.forEach(slot => {
+                if (slot.songId) {
+                    songsInSets.add(slot.songId);
+                }
+            });
+        });
+        event.specialMoments?.forEach(m => {
+            if (m.songId) {
+                songsInSets.add(m.songId);
+            }
+        });
+
         activeSingers.forEach(singer => {
             Object.entries(singer.repertoire).forEach(([songId, repItem]) => {
                 const forbiddenIds = event.doNotPlay.filter(i => i.type === 'SONG').map(i => i.value);
@@ -42,14 +57,17 @@ export const Editor: React.FC<EditorProps> = ({
                 
                 if (forbiddenIds.includes(song.id)) return;
                 if (forbiddenArtists.includes(song.artist.toLowerCase())) return;
-                if (event.specialMoments.some(m => m.songId === song.id)) return;
 
                 const rawKey = repItem.key;
                 const resolvedKey = rawKey === 'OG' ? song.originalKey : rawKey;
                 const isPreferred = resolvedKey === song.originalKey;
 
                 if (!map.has(song.id)) {
-                    map.set(song.id, { song, singers: [] });
+                    map.set(song.id, { 
+                        song, 
+                        singers: [],
+                        isInSet: songsInSets.has(song.id)
+                    });
                 }
                 
                 const entry = map.get(song.id)!;

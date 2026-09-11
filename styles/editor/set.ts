@@ -2,6 +2,7 @@ export const EDITOR_SET = {
   CONTAINER: "bg-white rounded-lg border shadow-sm overflow-hidden",
   HEADER: "bg-gray-50 px-4 py-3 border-b flex justify-between items-center",
   TITLE: "font-bold text-gray-700 uppercase tracking-wide text-sm",
+  BADGE: "ml-2 px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 rounded",
   SUBTITLE: "text-xs text-gray-500 font-medium",
   LIST: "divide-y divide-gray-100",
   FOOTER: "p-2 border-t bg-gray-50/50 flex justify-center",

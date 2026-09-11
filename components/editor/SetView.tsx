@@ -25,7 +25,19 @@ export const SetView: React.FC<SetViewProps> = ({
    return (
     <div className={EDITOR.SET.CONTAINER}>
        <div className={EDITOR.SET.HEADER}>
-          <h3 className={EDITOR.SET.TITLE}>{set.name}</h3>
+          <div className="flex items-center">
+             <h3 className={EDITOR.SET.TITLE}>{set.name}</h3>
+             {set.targetMinutes && (
+                <span className={EDITOR.SET.BADGE}>
+                   {set.targetMinutes}m
+                </span>
+             )}
+             {!set.targetMinutes && set.targetSongs && (
+                <span className={EDITOR.SET.BADGE}>
+                   {set.targetSongs} songs
+                </span>
+             )}
+          </div>
           <span className={EDITOR.SET.SUBTITLE}>
              {set.slots.filter(s => s.songId).length} / {set.slots.length} Songs
           </span>

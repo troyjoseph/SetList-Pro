@@ -1,8 +1,19 @@
-import React from 'react';
-import { ListMusic } from 'lucide-react';
-import { EventDetails } from '../../types';
-import { COMMON } from '../../styles/common';
+import React, { useMemo } from 'react';
+import { ListMusic, Plus } from 'lucide-react';
+import { EventDetails, SetLengthType, SetStructureConfig } from '../../types';
 import { EVENT_SETUP } from '../../styles/eventSetup';
+import { SET_STRUCTURE_STYLES } from '../../styles/eventSetup/setStructure';
+import { SET_STRUCTURE_CONSTANTS } from '../../lib/constants/setStructure';
+import {
+  getEffectiveSetConfigs,
+  updateIndividualSetConfig,
+  changeNumberOfSets,
+  applyLengthToAllSets,
+  calculateTotalStats,
+} from '../../lib/utils/setStructure';
+import { GlobalControls } from './structureConfig/GlobalControls';
+import { SetRowCard } from './structureConfig/SetRowCard';
+import { StructureSummary } from './structureConfig/StructureSummary';
 
 interface StructureConfigProps {
   event: EventDetails;
@@ -10,74 +21,86 @@ interface StructureConfigProps {
 }
 
 export const StructureConfig: React.FC<StructureConfigProps> = ({ event, setEvent }) => {
-    const calculateEstimatedSongs = (minutes: number) => {
-        return Math.ceil(minutes / 4) + 1;
-    };
+  const configs = useMemo(() => getEffectiveSetConfigs(event), [event]);
+  const stats = useMemo(() => calculateTotalStats(event), [event]);
+  const isTime = event.setLengthType === 'TIME';
+  const defaultLength = isTime ? (event.minutesPerSet || 45) : (event.songsPerSet || 10);
 
-    return (
-       <div className={EVENT_SETUP.SECTION_DIVIDER}>
-          <h3 className={EVENT_SETUP.SECTION_HEADER}>
-             <ListMusic size={20} className="mr-2" /> Set Structure
+  const handleUpdate = (index: number, updates: Partial<SetStructureConfig>) => {
+    setEvent(updateIndividualSetConfig(event, index, updates));
+  };
+
+  const handleRemove = (index: number) => {
+    const updated = configs.filter((_, i) => i !== index);
+    setEvent({
+      ...event,
+      numberOfSets: updated.length,
+      setConfigs: updated,
+      sets: event.sets?.filter((_, i) => i !== index) || event.sets
+    });
+  };
+
+  const handleAddSet = () => {
+    if (configs.length >= 10) return;
+    setEvent(changeNumberOfSets(event, configs.length + 1));
+  };
+
+  return (
+    <div className={EVENT_SETUP.SECTION_DIVIDER}>
+      <div className={SET_STRUCTURE_STYLES.CONTAINER}>
+        <div className={SET_STRUCTURE_STYLES.HEADER_AREA}>
+          <h3 className={SET_STRUCTURE_STYLES.SECTION_TITLE}>
+            <ListMusic size={20} className={SET_STRUCTURE_STYLES.SECTION_ICON} />
+            {SET_STRUCTURE_CONSTANTS.TITLE}
           </h3>
-          <div className={EVENT_SETUP.GRID_3}>
-             <div>
-                <COMMON.LABEL>Number of Sets</COMMON.LABEL>
-                <COMMON.INPUT.BASE 
-                  type="number" min="1" max="10"
-                  value={event.numberOfSets}
-                  onChange={e => setEvent({...event, numberOfSets: parseInt(e.target.value)})}
-                />
-             </div>
-             <div className={EVENT_SETUP.COL_SPAN_2}>
-                <COMMON.LABEL className="mb-2">Structure Type</COMMON.LABEL>
-                <div className={EVENT_SETUP.RADIO_GROUP}>
-                   <label className={EVENT_SETUP.RADIO_LABEL}>
-                      <input 
-                        type="radio" 
-                        name="setType"
-                        checked={event.setLengthType === 'TIME'}
-                        onChange={() => setEvent({...event, setLengthType: 'TIME'})}
-                        className="mr-2 text-indigo-600"
-                      />
-                      <span className={EVENT_SETUP.RADIO_TEXT}>Time Based (Minutes)</span>
-                   </label>
-                   <label className={EVENT_SETUP.RADIO_LABEL}>
-                      <input 
-                        type="radio" 
-                        name="setType"
-                        checked={event.setLengthType === 'SONG_COUNT'}
-                        onChange={() => setEvent({...event, setLengthType: 'SONG_COUNT'})}
-                        className="mr-2 text-indigo-600"
-                      />
-                      <span className={EVENT_SETUP.RADIO_TEXT}>Song Count</span>
-                   </label>
-                </div>
-                <div className={EVENT_SETUP.INPUT_CONTAINER}>
-                  {event.setLengthType === 'TIME' ? (
-                      <div className={EVENT_SETUP.TIME_INPUT_WRAPPER}>
-                         <input 
-                           type="number"
-                           value={event.minutesPerSet}
-                           onChange={e => setEvent({...event, minutesPerSet: parseInt(e.target.value)})}
-                           className={EVENT_SETUP.TIME_INPUT}
-                         />
-                         <span className={EVENT_SETUP.TEXT_DESC}>minutes per set</span>
-                         <span className={EVENT_SETUP.TEXT_DESC_SMALL}>(Approx. {calculateEstimatedSongs(event.minutesPerSet || 45)} songs)</span>
-                      </div>
-                  ) : (
-                      <div className={EVENT_SETUP.TIME_INPUT_WRAPPER}>
-                         <input 
-                           type="number"
-                           value={event.songsPerSet}
-                           onChange={e => setEvent({...event, songsPerSet: parseInt(e.target.value)})}
-                           className={EVENT_SETUP.TIME_INPUT}
-                         />
-                         <span className={EVENT_SETUP.TEXT_DESC}>songs per set</span>
-                      </div>
-                  )}
-                </div>
-             </div>
-          </div>
-       </div>
-    );
+          <span className="text-xs text-gray-500 font-medium">
+            Customize length per set
+          </span>
+        </div>
+
+        <GlobalControls
+          numberOfSets={event.numberOfSets}
+          setLengthType={event.setLengthType}
+          defaultLength={defaultLength}
+          onSetCountChange={(count) => setEvent(changeNumberOfSets(event, count))}
+          onTypeChange={(type: SetLengthType) => setEvent({ ...event, setLengthType: type })}
+          onApplyAll={(val) => setEvent(applyLengthToAllSets(event, val))}
+        />
+
+        <div className={SET_STRUCTURE_STYLES.SETS_LIST}>
+          {configs.map((config, index) => (
+            <SetRowCard
+              key={config.id || `set-${index}`}
+              index={index}
+              config={config}
+              isTime={isTime}
+              avgSongMin={event.settings?.avgSongMin || 4}
+              bufferSongs={event.settings?.bufferSongs || 0}
+              canRemove={configs.length > 1}
+              onUpdate={(updates) => handleUpdate(index, updates)}
+              onRemove={() => handleRemove(index)}
+            />
+          ))}
+
+          {configs.length < 10 && (
+            <button
+              type="button"
+              onClick={handleAddSet}
+              className={SET_STRUCTURE_STYLES.ADD_SET_BTN}
+            >
+              <Plus size={16} />
+              <span>{SET_STRUCTURE_CONSTANTS.ADD_SET_BUTTON}</span>
+            </button>
+          )}
+        </div>
+
+        <StructureSummary
+          totalSets={stats.count}
+          totalMinutes={stats.totalMinutes}
+          totalSongs={stats.totalEstimatedSongs}
+          isTime={isTime}
+        />
+      </div>
+    </div>
+  );
 };

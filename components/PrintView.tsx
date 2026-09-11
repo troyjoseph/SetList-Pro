@@ -129,7 +129,9 @@ export const PrintView: React.FC<PrintViewProps> = ({ currentEvent, songs, singe
                 <div key={set.id} className={PRINT.SET_CONTAINER}>
                     <div className={PRINT.SET_HEADER}>
                         <h3 className={PRINT.SET_TITLE}>{set.name}</h3>
-                        <span className="text-sm font-normal text-gray-500">{set.slots.filter(s => s.songId).length} songs</span>
+                        <span className="text-sm font-normal text-gray-500">
+                            {set.slots.filter(s => s.songId).length} songs{set.targetMinutes ? ` • ${set.targetMinutes} min` : ''}
+                        </span>
                     </div>
                     {set.slots.map((slot, slotIdx) => {
                         const song = songs.find(s => s.id === slot.songId);

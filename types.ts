@@ -71,6 +71,15 @@ export interface EventSet {
   id: string;
   name: string;
   slots: SetListSlot[];
+  targetMinutes?: number;
+  targetSongs?: number;
+}
+
+export interface SetStructureConfig {
+  id?: string;
+  name: string;
+  targetMinutes?: number;
+  targetSongs?: number;
 }
 
 export type SetLengthType = 'SONG_COUNT' | 'TIME';
@@ -107,6 +116,7 @@ export interface EventDetails {
   setLengthType: SetLengthType;
   minutesPerSet?: number;
   songsPerSet?: number;
+  setConfigs?: SetStructureConfig[];
 
   specialMoments: SpecialMoment[]; // Pre-set moments with specific needs
   mustPlay: RequestItem[]; // General requests (Songs or Artists)
@@ -131,4 +141,10 @@ export interface DragPayload {
   note?: string;
   setIndex?: number;
   slotIndex?: number;
+}
+
+export interface AvailableSong {
+  song: Song;
+  singers: { singer: Singer; key: string; isPreferred: boolean; note?: string }[];
+  isInSet: boolean;
 }
