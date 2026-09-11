@@ -4,6 +4,7 @@ import { EDITOR_TOOLBAR } from './editor/toolbar';
 import { EDITOR_SET } from './editor/set';
 import { EDITOR_ROW } from './editor/row';
 import { EDITOR_MOMENTS } from './editor/moments';
+import { EDITOR_TALLY } from './editor/tally';
 
 export const EDITOR = {
   LAYOUT: EDITOR_LAYOUT.CONTAINER,
@@ -18,5 +19,6 @@ export const EDITOR = {
   ROW: EDITOR_ROW,
   SET: EDITOR_SET,
   MOMENTS: EDITOR_MOMENTS,
+  TALLY: EDITOR_TALLY,
   ADD_SET_BTN: EDITOR_SET.ADD_SET_BTN
 };

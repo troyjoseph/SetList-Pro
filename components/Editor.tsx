@@ -5,6 +5,7 @@ import { EventDetails, Song, Singer, DragPayload, ViewState, SetListSlot, Availa
 import { EDITOR } from '../styles/editor';
 import { Sidebar } from './editor/Sidebar';
 import { Toolbar } from './editor/Toolbar';
+import { SingerTally } from './editor/SingerTally';
 import { MomentsPanel } from './editor/MomentsPanel';
 import { SetView } from './editor/SetView';
 
@@ -206,6 +207,8 @@ export const Editor: React.FC<EditorProps> = ({
              onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
              onOpenAppSidebar={onOpenAppSidebar}
            />
+
+           <SingerTally sets={event.sets} activeSingers={activeSingers} />
 
            <div className={EDITOR.CANVAS.SCROLL_AREA}>
               <div className={EDITOR.CANVAS.CONTENT}>
