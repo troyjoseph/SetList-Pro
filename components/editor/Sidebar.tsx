@@ -5,10 +5,10 @@ import { COMMON } from '../../styles/common';
 import { EDITOR } from '../../styles/editor';
 
 interface SidebarProps {
-  songs: { song: Song; singers: { singer: Singer; key: string; isPreferred: boolean }[] }[];
+  songs: { song: Song; singers: { singer: Singer; key: string; isPreferred: boolean; note?: string }[] }[];
   activeSingers: Singer[];
   gigType: GigType;
-  onAddSong: (title: string) => void;
+  onAddSong: (title: string, matchMusicBrainz?: boolean) => void;
   isAddingSong: boolean;
   onDragStart: (e: React.DragEvent, type: 'NEW', data: DragPayload) => void;
 }
@@ -17,6 +17,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ songs, activeSingers, gigType,
   const [filter, setFilter] = useState('');
   const [singerFilter, setSingerFilter] = useState('ALL');
   const [quickAdd, setQuickAdd] = useState('');
+  const [matchMusicBrainz, setMatchMusicBrainz] = useState(false);
 
   const filteredList = songs.filter(({ song, singers }) => {
       const matchesText = song.title.toLowerCase().includes(filter.toLowerCase()) || song.artist.toLowerCase().includes(filter.toLowerCase());
@@ -52,22 +53,33 @@ export const Sidebar: React.FC<SidebarProps> = ({ songs, activeSingers, gigType,
        
        <div className={EDITOR.SIDEBAR.LIST}>
          <div className={EDITOR.SIDEBAR.QUICK_ADD_CONTAINER}>
-           <div className={EDITOR.SIDEBAR.QUICK_ADD_WRAPPER}>
-             <input 
-               type="text" 
-               value={quickAdd} 
-               onChange={e => setQuickAdd(e.target.value)}
-               onKeyDown={e => e.key === 'Enter' && onAddSong(quickAdd)}
-               placeholder="Quick add new song..."
-               className={EDITOR.SIDEBAR.QUICK_ADD_INPUT}
-             />
-             <button 
-               onClick={() => onAddSong(quickAdd)}
-               disabled={isAddingSong}
-               className={EDITOR.SIDEBAR.QUICK_ADD_BTN}
-             >
-               {isAddingSong ? <Loader2 size={16} className={EDITOR.SIDEBAR.LOADER_ICON}/> : <Plus size={16}/>}
-             </button>
+           <div className="flex flex-col gap-2 w-full">
+             <div className={EDITOR.SIDEBAR.QUICK_ADD_WRAPPER}>
+               <input 
+                 type="text" 
+                 value={quickAdd} 
+                 onChange={e => setQuickAdd(e.target.value)}
+                 onKeyDown={e => e.key === 'Enter' && onAddSong(quickAdd, matchMusicBrainz)}
+                 placeholder="Quick add new song..."
+                 className={EDITOR.SIDEBAR.QUICK_ADD_INPUT}
+               />
+               <button 
+                 onClick={() => onAddSong(quickAdd, matchMusicBrainz)}
+                 disabled={isAddingSong}
+                 className={EDITOR.SIDEBAR.QUICK_ADD_BTN}
+               >
+                 {isAddingSong ? <Loader2 size={16} className={EDITOR.SIDEBAR.LOADER_ICON}/> : <Plus size={16}/>}
+               </button>
+             </div>
+             <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+               <input 
+                 type="checkbox" 
+                 checked={matchMusicBrainz} 
+                 onChange={(e) => setMatchMusicBrainz(e.target.checked)} 
+                 className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+               />
+               Match against MusicBrainz
+             </label>
            </div>
          </div>
 
@@ -79,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ songs, activeSingers, gigType,
                 <div 
                   key={song.id}
                   draggable
-                  onDragStart={(e) => onDragStart(e, 'NEW', { songId: song.id, singerId: defaultSinger.singer.id, key: defaultSinger.key })}
+                  onDragStart={(e) => onDragStart(e, 'NEW', { songId: song.id, singerId: defaultSinger.singer.id, key: defaultSinger.key, note: defaultSinger.note })}
                   className={EDITOR.SIDEBAR.SONG_CARD}
                 >
                    <div className={EDITOR.SIDEBAR.CARD_HEADER}>

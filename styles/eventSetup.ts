@@ -1,10 +1,10 @@
 
 export const EVENT_SETUP = {
-  FORM_CONTAINER: "bg-white rounded-xl shadow-sm border p-6 space-y-8 flex-1 overflow-y-auto",
+  FORM_CONTAINER: "bg-white rounded-xl shadow-sm border p-4 sm:p-6 space-y-8 flex-1 overflow-y-auto",
   GRID_2: "grid grid-cols-1 md:grid-cols-2 gap-6",
   GRID_3: "grid grid-cols-1 md:grid-cols-3 gap-6",
   GRID_GAP_8: "grid grid-cols-1 md:grid-cols-2 gap-8",
-  COL_SPAN_2: "col-span-2",
+  COL_SPAN_2: "md:col-span-2",
   SECTION_DIVIDER: "border-t pt-6",
   SECTION_HEADER: "text-lg font-semibold text-gray-800 mb-4 flex items-center",
   

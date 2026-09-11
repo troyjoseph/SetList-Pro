@@ -2,7 +2,7 @@ import { COMMON } from './common';
 
 export const MODAL = {
   OVERLAY: "fixed inset-0 bg-black/50 flex items-center justify-center z-50",
-  CONTAINER: "bg-white rounded-lg shadow-xl w-full flex flex-col",
+  CONTAINER: "bg-white rounded-lg shadow-xl w-full flex flex-col mx-4",
   SIZE: {
     MD: "max-w-md",
     LG: "max-w-2xl",
@@ -40,15 +40,16 @@ export const MODAL = {
     ITEM_SUBTITLE: "text-xs text-gray-500"
   },
   REVIEW: {
-    TABLE_CONTAINER: "border rounded-lg overflow-hidden",
+    TABLE_CONTAINER: "border rounded-lg overflow-x-auto",
     TABLE: "min-w-full divide-y divide-gray-200",
     TH: "px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider",
     TD: "px-4 py-2 whitespace-nowrap text-sm text-gray-700",
     INPUT: "w-20 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border px-2 py-1 text-gray-900 bg-white font-mono",
+    INPUT_WIDE: "w-full min-w-[150px] border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border px-2 py-1 text-gray-900 bg-white",
     BADGE_NEW: "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800",
     BADGE_EXISTING: "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
   },
-  GRID_COL_2: "grid grid-cols-2 gap-4",
+  GRID_COL_2: "grid grid-cols-1 sm:grid-cols-2 gap-4",
   GRID_3: "grid grid-cols-1 md:grid-cols-3 gap-4",
   COL_SPAN_2: "md:col-span-2",
   COL_SPAN_3: "md:col-span-3",
@@ -63,7 +64,7 @@ export const MODAL = {
   SELECT_INPUT: "w-full border border-gray-300 rounded text-sm px-2 py-1.5 bg-white text-gray-900",
   TRANSITIONS: {
     BORDER: "border-t pt-4",
-    GRID: "grid grid-cols-2 gap-4",
+    GRID: "grid grid-cols-1 sm:grid-cols-2 gap-4",
     TITLE: "text-xs font-bold uppercase text-gray-500 mb-1",
     INPUT_WRAPPER: "relative mb-2",
     INPUT: "w-full border border-gray-300 rounded text-xs px-2 py-1",

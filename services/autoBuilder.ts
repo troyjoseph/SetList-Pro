@@ -219,15 +219,20 @@ export const generateSetList = (
     // Determine Singer
     let singerId = '';
     let key = song.originalKey;
+    let slotNote = '';
     
     // 1. Try manually assigned singer
     if (config?.assignedSingerId) {
         const assigned = activeSingers.find(s => s.id === config.assignedSingerId);
         if (assigned) {
              singerId = assigned.id;
-             const repKey = assigned.repertoire[songId];
-             if (repKey) {
-                 key = repKey === 'OG' ? song.originalKey : repKey;
+             const repItem = assigned.repertoire[songId];
+             if (repItem) {
+                 key = repItem.key === 'OG' ? song.originalKey : repItem.key;
+                 // Set the specific note from the singer if available
+                 if (repItem.note) {
+                    slotNote = repItem.note;
+                 }
              }
         }
     }
@@ -242,8 +247,11 @@ export const generateSetList = (
 
         if (candidate) {
             singerId = candidate.id;
-            const repKey = candidate.repertoire[songId];
-            key = repKey === 'OG' ? song.originalKey : repKey;
+            const repItem = candidate.repertoire[songId];
+            key = repItem.key === 'OG' ? song.originalKey : repItem.key;
+            if (repItem.note) {
+                slotNote = repItem.note;
+            }
         }
     }
 
@@ -261,7 +269,8 @@ export const generateSetList = (
         emptySlot.key = key;
         emptySlot.isRequest = true;
         emptySlot.requestType = 'IN_SET';
-        emptySlot.note = config?.note;
+        // Combine notes: singer specific followed by request specific
+        emptySlot.note = [slotNote, config?.note].filter(Boolean).join('; ');
         usedSongIds.add(song.id);
         singerCounts[singerId] = (singerCounts[singerId] || 0) + 1;
         break;
@@ -301,8 +310,8 @@ export const generateSetList = (
     }
 
     // 4. Key Matching
-    const repKey = singer.repertoire[song.id];
-    const singerKey = repKey === 'OG' ? song.originalKey : repKey;
+    const repItem = singer.repertoire[song.id];
+    const singerKey = repItem.key === 'OG' ? song.originalKey : repItem.key;
     if (singerKey === song.originalKey) score += 5;
 
     // 5. Preferred/Avoided Sets
@@ -419,14 +428,12 @@ export const generateSetList = (
         slot.songId = best.song.id;
         slot.singerId = best.singer.id;
         
-        const repKey = best.singer.repertoire[best.song.id];
-        slot.key = repKey === 'OG' ? best.song.originalKey : repKey;
+        const repItem = best.singer.repertoire[best.song.id];
+        slot.key = repItem.key === 'OG' ? best.song.originalKey : repItem.key;
         
-        // Attach soft request note if applicable
+        // Combine notes: singer specific followed by soft request specific
         const softConfig = softRequestConfig[best.song.id];
-        if (softConfig?.note) {
-            slot.note = softConfig.note;
-        }
+        slot.note = [repItem.note, softConfig?.note].filter(Boolean).join('; ') || undefined;
         
         usedSongIds.add(best.song.id);
         singerHistory.push(best.singer.id);

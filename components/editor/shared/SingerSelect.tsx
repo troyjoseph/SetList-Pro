@@ -31,10 +31,10 @@ export const SingerSelect: React.FC<SingerSelectProps> = ({
          {includeAuto && <option value="">Auto-Assign</option>}
          
          {activeSingers
-            .filter(s => s.repertoire[song.id])
+            .filter(s => !!s.repertoire[song.id])
             .map(s => {
-               const repKey = s.repertoire[song.id];
-               const actualKey = repKey === 'OG' ? song?.originalKey : repKey;
+               const repItem = s.repertoire[song.id];
+               const actualKey = repItem.key === 'OG' ? song?.originalKey : repItem.key;
                const isChange = song && actualKey !== song.originalKey;
                return (
                   <option key={s.id} value={s.id}>

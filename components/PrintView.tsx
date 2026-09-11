@@ -91,14 +91,18 @@ export const PrintView: React.FC<PrintViewProps> = ({ currentEvent, songs, singe
                         if (m.assignedSingerId) {
                             const s = singers.find(x => x.id === m.assignedSingerId);
                             singerName = s?.name || '';
-                             if (s && song && s.repertoire[song.id] && s.repertoire[song.id] !== 'OG') {
-                                key = s.repertoire[song.id];
+                             if (s && song && s.repertoire[song.id]) {
+                                const repItem = s.repertoire[song.id];
+                                if (repItem.key !== 'OG') {
+                                    key = repItem.key;
+                                }
                             }
                         } else if (song) {
                              const capable = activeSingers.find(s => s.repertoire[song.id]);
                              if (capable) {
                                  singerName = capable.name;
-                                 if (capable.repertoire[song.id] !== 'OG') key = capable.repertoire[song.id];
+                                 const repItem = capable.repertoire[song.id];
+                                 if (repItem.key !== 'OG') key = repItem.key;
                              }
                         }
                         const isKeyChange = song && key !== song.originalKey;

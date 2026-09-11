@@ -16,35 +16,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check local storage for existing session
-    const storedUser = localStorage.getItem('setlist_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    // Automatically log in a default user to bypass the login flow
+    const defaultUser = { id: 'local-user', email: 'local@aisetlist.app', name: 'Admin' };
+    setUser(defaultUser);
     setLoading(false);
   }, []);
 
   const login = async (password: string) => {
-    try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ password }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Invalid password');
-      }
-
-      const loggedInUser = { id: 'local-user', email: 'local@setlistpro.app', name: 'Master User' };
-      setUser(loggedInUser);
-      localStorage.setItem('setlist_user', JSON.stringify(loggedInUser));
-    } catch (error: any) {
-      throw new Error(error.message || 'Login failed');
-    }
+    // Login is now a no-op or can be removed, but keeping it for compatibility
+    const loggedInUser = { id: 'local-user', email: 'local@aisetlist.app', name: 'Admin' };
+    setUser(loggedInUser);
   };
 
   const logout = async () => {

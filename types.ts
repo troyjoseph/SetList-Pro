@@ -37,16 +37,22 @@ export interface Song {
   title: string;
   artist: string;
   originalKey: string;
+  duration?: number; // in milliseconds
   // Configuration per gig type
   gigData: Record<string, GigSpecificData>; 
+}
+
+export interface SingerRepertoireItem {
+  key: string;
+  note?: string;
 }
 
 export interface Singer {
   id: string;
   name: string;
   range: Range;
-  // Map of SongID -> Key they sing it in
-  repertoire: Record<string, string>; 
+  // Map of SongID -> Repertoire settings
+  repertoire: Record<string, SingerRepertoireItem>; 
 }
 
 export interface SetListSlot {
@@ -122,6 +128,7 @@ export interface DragPayload {
   songId?: string;
   singerId?: string;
   key?: string;
+  note?: string;
   setIndex?: number;
   slotIndex?: number;
 }

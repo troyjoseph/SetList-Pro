@@ -1,5 +1,5 @@
 export const EDITOR_SIDEBAR = {
-  CONTAINER: "w-80 bg-white border-r flex flex-col z-10 shadow-sm",
+  CONTAINER: "w-80 h-full bg-white border-r flex flex-col z-10 shadow-sm",
   HEADER: "p-4 border-b bg-gray-50",
   TITLE: "text-sm font-bold uppercase text-gray-500 mb-3",
   LIST: "flex-1 overflow-y-auto p-2 space-y-1",

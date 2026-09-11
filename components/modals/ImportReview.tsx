@@ -5,6 +5,8 @@ import { COMMON } from '../../styles/common';
 import { MODAL } from '../../styles/modals';
 import { ImportReviewTableRow } from './singer/ImportReviewTableRow';
 
+import { CanonicalMetadata } from '../../services/musicBrainzService';
+
 export interface PendingImportItem {
   tempId: string;
   title: string;
@@ -17,20 +19,43 @@ export interface PendingImportItem {
   matchedTitle?: string;
   matchedArtist?: string;
   matchedKey?: string;
+  duration?: number;
+  potentialMatches?: CanonicalMetadata[];
+  note?: string;
+  singerRecommendation?: string;
 }
 
 interface ImportReviewProps {
   items: PendingImportItem[];
-  onUpdateItem: (id: string, field: 'singerKey' | 'originalKey', value: string) => void;
+  onUpdateItem: (id: string, field: 'singerKey' | 'originalKey' | 'title' | 'artist' | 'note', value: string) => void;
   onRejectMatch: (id: string) => void;
+  onSelectMatch: (tempId: string, match: CanonicalMetadata) => void;
   onConfirm: () => void;
   onCancel: () => void;
   onStandardize: (setProgress: (msg: string) => void) => Promise<void>;
+  autoStandardize?: boolean;
 }
 
-export const ImportReview: React.FC<ImportReviewProps> = ({ items, onUpdateItem, onRejectMatch, onConfirm, onCancel, onStandardize }) => {
+export const ImportReview: React.FC<ImportReviewProps> = ({ 
+    items, 
+    onUpdateItem, 
+    onRejectMatch, 
+    onSelectMatch, 
+    onConfirm, 
+    onCancel, 
+    onStandardize,
+    autoStandardize = false
+}) => {
   const [progress, setProgress] = useState('');
   const [isStandardizing, setIsStandardizing] = useState(false);
+  const autoRanRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (autoStandardize && !autoRanRef.current && items.length > 0) {
+        autoRanRef.current = true;
+        handleStandardizeClick();
+    }
+  }, [autoStandardize, items]);
 
   const handleStandardizeClick = async () => {
       setIsStandardizing(true);
@@ -51,14 +76,16 @@ export const ImportReview: React.FC<ImportReviewProps> = ({ items, onUpdateItem,
                 Review the songs below. Use <b>Tab</b> to move between key inputs.
                 Items marked <span className="text-green-600 font-bold">New</span> will be added to the Song Bank.
              </p>
-             <button 
-                onClick={handleStandardizeClick} 
-                disabled={isStandardizing}
-                className="flex items-center text-xs bg-purple-50 text-purple-700 px-3 py-2 rounded-md hover:bg-purple-100 border border-purple-200 transition-colors disabled:opacity-50"
-             >
-                {isStandardizing ? <Loader2 size={14} className="animate-spin mr-2"/> : <Sparkles size={14} className="mr-2"/>}
-                Standardize with MusicBrainz
-             </button>
+             {!autoStandardize && (
+               <button 
+                  onClick={handleStandardizeClick} 
+                  disabled={isStandardizing}
+                  className="flex items-center text-xs bg-purple-50 text-purple-700 px-3 py-2 rounded-md hover:bg-purple-100 border border-purple-200 transition-colors disabled:opacity-50"
+               >
+                  {isStandardizing ? <Loader2 size={14} className="animate-spin mr-2"/> : <Sparkles size={14} className="mr-2"/>}
+                  Canonicalize new songs
+               </button>
+             )}
           </div>
 
           {progress && (
@@ -86,6 +113,7 @@ export const ImportReview: React.FC<ImportReviewProps> = ({ items, onUpdateItem,
                           index={index}
                           onUpdateItem={onUpdateItem}
                           onRejectMatch={onRejectMatch}
+                          onSelectMatch={onSelectMatch}
                       />
                    ))}
                  </tbody>

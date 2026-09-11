@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Plus } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Plus, Menu, X } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { EventDetails, Song, Singer, DragPayload, ViewState, SetListSlot } from '../types';
 import { EDITOR } from '../styles/editor';
@@ -15,23 +15,25 @@ interface EditorProps {
   activeSingers: Singer[];
   allSingers: Singer[];
   onAutoFill: () => void;
-  onExportCSV: () => void;
+  onExport: () => void;
   onViewChange: (v: ViewState) => void;
-  onAddSong: (title: string) => void;
+  onAddSong: (title: string, matchMusicBrainz?: boolean) => void;
   isAddingSong: boolean;
   onOpenMomentModal: () => void;
+  onOpenAppSidebar?: () => void;
 }
 
 export const Editor: React.FC<EditorProps> = ({ 
     event, setEvent, songs, activeSingers, allSingers,
-    onAutoFill, onExportCSV, onViewChange, onAddSong, isAddingSong, onOpenMomentModal 
+    onAutoFill, onExport, onViewChange, onAddSong, isAddingSong, onOpenMomentModal, onOpenAppSidebar 
 }) => {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
     
     const availableSongs = useMemo(() => {
         const map = new Map<string, any>();
         
         activeSingers.forEach(singer => {
-            Object.entries(singer.repertoire).forEach(([songId, rawKey]) => {
+            Object.entries(singer.repertoire).forEach(([songId, repItem]) => {
                 const forbiddenIds = event.doNotPlay.filter(i => i.type === 'SONG').map(i => i.value);
                 const forbiddenArtists = event.doNotPlay.filter(i => i.type === 'ARTIST').map(i => i.value.toLowerCase());
                 
@@ -42,6 +44,7 @@ export const Editor: React.FC<EditorProps> = ({
                 if (forbiddenArtists.includes(song.artist.toLowerCase())) return;
                 if (event.specialMoments.some(m => m.songId === song.id)) return;
 
+                const rawKey = repItem.key;
                 const resolvedKey = rawKey === 'OG' ? song.originalKey : rawKey;
                 const isPreferred = resolvedKey === song.originalKey;
 
@@ -50,7 +53,7 @@ export const Editor: React.FC<EditorProps> = ({
                 }
                 
                 const entry = map.get(song.id)!;
-                entry.singers.push({ singer, key: resolvedKey, isPreferred });
+                entry.singers.push({ singer, key: resolvedKey, isPreferred, note: repItem.note });
             });
         });
 
@@ -75,8 +78,14 @@ export const Editor: React.FC<EditorProps> = ({
         const payload = JSON.parse(payloadStr) as DragPayload;
         const newSets = [...event.sets];
         if (type === 'NEW') {
-          const { songId, singerId, key } = payload;
-          newSets[targetSetIndex].slots[targetSlotIndex] = { ...newSets[targetSetIndex].slots[targetSlotIndex], songId: songId || '', singerId: singerId || '', key: key || '' };
+          const { songId, singerId, key, note } = payload;
+          newSets[targetSetIndex].slots[targetSlotIndex] = { 
+            ...newSets[targetSetIndex].slots[targetSlotIndex], 
+            songId: songId || '', 
+            singerId: singerId || '', 
+            key: key || '',
+            note: note || undefined
+          };
         } else if (type === 'MOVE') {
           const { setIndex: srcSetIdx, slotIndex: srcSlotIdx } = payload;
           if (srcSetIdx !== undefined && srcSlotIdx !== undefined) {
@@ -95,11 +104,12 @@ export const Editor: React.FC<EditorProps> = ({
     
         const singer = allSingers.find(s => s.id === newSingerId);
         if (singer) {
-            const rawKey = singer.repertoire[slot.songId];
+            const repItem = singer.repertoire[slot.songId];
             const song = songs.find(s => s.id === slot.songId);
-            if (song && rawKey) {
+            if (song && repItem) {
                 slot.singerId = singer.id;
-                slot.key = rawKey === 'OG' ? song.originalKey : rawKey;
+                slot.key = repItem.key === 'OG' ? song.originalKey : repItem.key;
+                slot.note = repItem.note || undefined;
                 setEvent({ ...event, sets: newSets });
             }
         }
@@ -139,14 +149,32 @@ export const Editor: React.FC<EditorProps> = ({
 
     return (
       <div className={EDITOR.LAYOUT}>
-        <Sidebar 
-            songs={availableSongs} 
-            activeSingers={activeSingers} 
-            gigType={event.gigType} 
-            onAddSong={onAddSong} 
-            isAddingSong={isAddingSong} 
-            onDragStart={handleDragStart} 
-        />
+        {isSidebarOpen && (
+            <div 
+                className="fixed inset-0 bg-black/50 z-30 md:hidden"
+                onClick={() => setIsSidebarOpen(false)}
+            />
+        )}
+
+        <div className={`
+            fixed inset-y-0 left-0 z-40 h-full transform transition-all duration-300 ease-in-out shrink-0
+            md:relative
+            ${isSidebarOpen ? 'translate-x-0 w-80' : '-translate-x-full w-0 overflow-hidden'}
+        `}>
+            <div className="absolute top-4 right-4 md:hidden z-50">
+                <button onClick={() => setIsSidebarOpen(false)} className="p-1 bg-white rounded-md shadow-sm text-gray-500 hover:text-gray-700">
+                    <X size={20} />
+                </button>
+            </div>
+            <Sidebar 
+                songs={availableSongs} 
+                activeSingers={activeSingers} 
+                gigType={event.gigType} 
+                onAddSong={onAddSong} 
+                isAddingSong={isAddingSong} 
+                onDragStart={handleDragStart} 
+            />
+        </div>
 
         <div className={EDITOR.CANVAS.CONTAINER}>
            <Toolbar 
@@ -154,8 +182,11 @@ export const Editor: React.FC<EditorProps> = ({
              gigType={event.gigType} 
              onSetup={() => onViewChange('EVENT_SETUP')} 
              onAutoFill={onAutoFill} 
-             onExport={onExportCSV} 
+             onExport={onExport} 
              onPrint={() => onViewChange('PRINT')} 
+             isSidebarOpen={isSidebarOpen}
+             onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+             onOpenAppSidebar={onOpenAppSidebar}
            />
 
            <div className={EDITOR.CANVAS.SCROLL_AREA}>

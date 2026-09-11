@@ -36,6 +36,8 @@ export const isFuzzyMatch = (str1: string, str2: string) => {
 };
 
 export const findBestSongMatch = (songs: Song[], itemTitle: string, itemArtist: string): Song | undefined => {
+    const hasArtist = itemArtist && itemArtist.toLowerCase() !== 'unknown';
+    
     // Try to find an exact match on normalized title and artist first
     let existing = songs.find(s => 
         normalize(s.title) === normalize(itemTitle) && 
@@ -50,14 +52,16 @@ export const findBestSongMatch = (songs: Song[], itemTitle: string, itemArtist: 
         );
     }
     
-    // Fallback to just matching the normalized title
-    if (!existing) {
+    // Fallback to title-only matching ONLY if no artist was provided or previous matches failed 
+    // AND the bank song is sufficiently similar
+    if (!existing && !hasArtist) {
+        // Match just the normalized title
         existing = songs.find(s => normalize(s.title) === normalize(itemTitle));
-    }
-    
-    // Fallback to fuzzy matching just the title
-    if (!existing) {
-        existing = songs.find(s => isFuzzyMatch(s.title, itemTitle));
+        
+        // Final fallback to fuzzy matching just the title
+        if (!existing) {
+            existing = songs.find(s => isFuzzyMatch(s.title, itemTitle));
+        }
     }
 
     return existing;

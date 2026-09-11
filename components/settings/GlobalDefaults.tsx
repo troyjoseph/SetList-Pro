@@ -46,6 +46,18 @@ export const GlobalDefaults: React.FC<GlobalDefaultsProps> = ({ appDefaults, set
           onChange={e => setAppDefaults({...appDefaults, showTimestampsCount: parseInt(e.target.value)})} 
         />
       </div>
+      <div className="col-span-2 flex items-center mt-2">
+        <input 
+          id="autoStandardize"
+          type="checkbox" 
+          checked={appDefaults.autoStandardizeSongs !== false} 
+          onChange={e => setAppDefaults({...appDefaults, autoStandardizeSongs: e.target.checked})}
+          className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+        />
+        <label htmlFor="autoStandardize" className="ml-2 text-sm font-medium text-gray-700">
+          Automatically standardize new songs with MusicBrainz on import
+        </label>
+      </div>
     </div>
   </div>
 );

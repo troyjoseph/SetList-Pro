@@ -34,10 +34,11 @@ interface MainContentProps {
   setIsSingerModalOpen: (b: boolean) => void;
   setNewMomentRequest: (m: any) => void;
   setIsMomentModalOpen: (b: boolean) => void;
+  setIsBulkSingerModalOpen: (b: boolean) => void;
 
   // Actions
   isAddingSong: boolean;
-  onAddSong: (title: string) => void;
+  onAddSong: (title: string, matchMusicBrainz?: boolean) => void;
   createNewEvent: () => void;
   deleteEvent: (id: string) => void;
   duplicateEvent: (id: string) => void;
@@ -48,10 +49,11 @@ interface MainContentProps {
   handleSaveEventSetup: () => void;
   handleAutoFill: () => void;
   handleExportCSV: () => void;
+  onOpenAppSidebar?: () => void;
 }
 
 export const MainContent: React.FC<MainContentProps> = (props) => {
-  const { view, currentEvent, isAddingSong } = props;
+  const { view, currentEvent, isAddingSong, onOpenAppSidebar } = props;
 
   return (
     <LAYOUT.MAIN>
@@ -86,6 +88,7 @@ export const MainContent: React.FC<MainContentProps> = (props) => {
                     props.setEditingSinger({ id: uuidv4(), name: '', range: Range.UNSPECIFIED, repertoire: {} }); 
                     props.setIsSingerModalOpen(true); 
                 }} 
+                onBulkImport={() => props.setIsBulkSingerModalOpen(true)}
                 onEditSinger={(s) => { 
                     props.setEditingSinger(JSON.parse(JSON.stringify(s))); 
                     props.setIsSingerModalOpen(true); 
@@ -124,10 +127,11 @@ export const MainContent: React.FC<MainContentProps> = (props) => {
                 activeSingers={props.activeSingers} 
                 allSingers={props.singers} 
                 onAutoFill={props.handleAutoFill} 
-                onExportCSV={props.handleExportCSV} 
+                onExport={props.handleExportCSV} 
                 onViewChange={props.setView} 
                 onAddSong={props.onAddSong} 
                 isAddingSong={isAddingSong} 
+                onOpenAppSidebar={onOpenAppSidebar}
                 onOpenMomentModal={() => { 
                     props.setNewMomentRequest({ assignedSingerId: '' }); 
                     props.setIsMomentModalOpen(true); 

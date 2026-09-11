@@ -1,18 +1,20 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppLogic } from './hooks/useAppLogic';
 import { useAuth } from './contexts/AuthContext';
 import { AppSidebar } from './components/layout/AppSidebar';
 import { MainContent } from './components/layout/MainContent';
 import { PrintView } from './components/PrintView';
-import { SingerModal, SongModal, MomentModal, ConfirmModal } from './components/Modals';
-import { Login } from './components/Login';
+import { SingerModal, SongModal, MomentModal, ConfirmModal, BulkSingerImportModal } from './components/Modals';
+import { LandingPage } from './components/LandingPage';
 import { LAYOUT } from './styles/layout';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Menu } from 'lucide-react';
 
 export default function App() {
   const { user, loading } = useAuth();
   const logic = useAppLogic();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : false);
+  const [showLanding, setShowLanding] = useState(true);
 
   if (loading) {
     return (
@@ -22,8 +24,8 @@ export default function App() {
     );
   }
 
-  if (!user) {
-    return <Login />;
+  if (showLanding) {
+    return <LandingPage onEnter={() => setShowLanding(false)} />;
   }
   
   // Print View is special as it takes over the whole screen
@@ -40,6 +42,18 @@ export default function App() {
       );
   }
 
+  const getMobileTitle = () => {
+    switch (logic.view) {
+      case 'DASHBOARD': return 'Dashboard';
+      case 'SONGBANK': return 'Song Bank';
+      case 'SINGERS': return 'Singers';
+      case 'SETTINGS': return 'Settings';
+      case 'EVENT_SETUP': return 'Event Setup';
+      case 'EDITOR': return logic.currentEvent?.name || 'Editor';
+      default: return 'Setlist♯';
+    }
+  };
+
   return (
     <LAYOUT.CONTAINER>
       <AppSidebar 
@@ -47,12 +61,27 @@ export default function App() {
         setView={logic.setView}
         activeEventId={logic.activeEventId}
         currentEvent={logic.currentEvent}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
-      <MainContent 
-        {...logic}
-        onAddSong={logic.handleAddSong}
-      />
+      <div className="flex-1 flex flex-col overflow-hidden relative w-full">
+        {logic.view !== 'EDITOR' && (
+          <LAYOUT.MOBILE_HEADER>
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-gray-600 hover:text-gray-900">
+              <Menu size={24} />
+            </button>
+            <LAYOUT.MOBILE_TITLE>{getMobileTitle()}</LAYOUT.MOBILE_TITLE>
+            <div className="w-6" /> {/* Spacer for centering */}
+          </LAYOUT.MOBILE_HEADER>
+        )}
+
+        <MainContent 
+          {...logic}
+          onAddSong={logic.handleAddSong}
+          onOpenAppSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        />
+      </div>
 
       {/* Modals */}
       <SingerModal 
@@ -63,6 +92,19 @@ export default function App() {
         onSave={logic.handleSaveSinger} 
         songs={logic.songs} 
         setSongs={logic.setSongs} 
+        appDefaults={logic.appDefaults}
+      />
+
+      <BulkSingerImportModal
+        isOpen={logic.isBulkSingerModalOpen}
+        onClose={() => logic.setIsBulkSingerModalOpen(false)}
+        songs={logic.songs}
+        setSongs={logic.setSongs}
+        appDefaults={logic.appDefaults}
+        onImportComplete={(newSingers) => {
+          logic.setSingers(prev => [...prev, ...newSingers]);
+          logic.setIsBulkSingerModalOpen(false);
+        }}
       />
       
       <SongModal 

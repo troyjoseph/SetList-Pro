@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { COMMON } from './common';
 
 export const SETTINGS = {
-  CONTAINER: "p-8 max-w-4xl mx-auto",
+  CONTAINER: "p-4 sm:p-8 max-w-4xl mx-auto",
   SECTION: "bg-white p-6 rounded-xl shadow-sm border",
   SECTION_HEADER: "text-lg font-semibold mb-4 text-gray-800 border-b pb-2 flex items-center",
   GRID: "grid grid-cols-1 md:grid-cols-2 gap-6",

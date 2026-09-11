@@ -29,6 +29,7 @@ export const useAppLogic = () => {
       maxSlowSongsPerSet: 1,
       showTimestampsCount: 6,
       keyHighlightColor: 'yellow',
+      autoStandardizeSongs: true,
       moments: ["Father/Daughter Dance", "Mother/Son Dance", "First Dance", "Cake Cutting", "Bouquet Toss", "Entrance", "Speech Intro"]
   });
 
@@ -45,6 +46,7 @@ export const useAppLogic = () => {
   const [activeGigTypeTab, setActiveGigTypeTab] = useState<GigType>(GigType.WEDDING);
   const [isMomentModalOpen, setIsMomentModalOpen] = useState(false);
   const [newMomentRequest, setNewMomentRequest] = useState<Partial<SpecialMoment>>({});
+  const [isBulkSingerModalOpen, setIsBulkSingerModalOpen] = useState(false);
 
   const [confirmConfig, setConfirmConfig] = useState<{
     isOpen: boolean;
@@ -163,7 +165,7 @@ export const useAppLogic = () => {
 
   // --- Actions ---
 
-  const handleAddSong = (input: string) => {
+  const handleAddSong = async (input: string, matchMusicBrainz: boolean = false) => {
     if (!input.trim()) {
         const blankSong: Song = { id: uuidv4(), title: '', artist: '', originalKey: '', gigData: createGigData() };
         setEditingSong({...blankSong}); 
@@ -198,11 +200,35 @@ export const useAppLogic = () => {
        }).join(' ');
     };
 
+    let finalTitle = toTitleCase(title);
+    let finalArtist = artist === 'Unknown' ? 'Unknown' : toTitleCase(artist);
+    let finalKey = 'C';
+
+    if (matchMusicBrainz) {
+      setIsAddingSong(true);
+      try {
+        const { searchMusicBrainz } = await import('../services/musicBrainzService');
+        const results = await searchMusicBrainz(title, artist === 'Unknown' ? '' : artist);
+        if (results && results.length > 0) {
+          const bestMatch = results[0];
+          finalTitle = toTitleCase(bestMatch.title);
+          finalArtist = toTitleCase(bestMatch.artist);
+          if (bestMatch.key) {
+            finalKey = bestMatch.key;
+          }
+        }
+      } catch (e) {
+        console.error("MusicBrainz search failed", e);
+      } finally {
+        setIsAddingSong(false);
+      }
+    }
+
     const newSong: Song = { 
         id: uuidv4(), 
-        title: toTitleCase(title), 
-        artist: artist === 'Unknown' ? 'Unknown' : toTitleCase(artist), 
-        originalKey: 'C', 
+        title: finalTitle, 
+        artist: finalArtist, 
+        originalKey: finalKey, 
         gigData: createGigData() 
     };
     
@@ -343,6 +369,7 @@ export const useAppLogic = () => {
     activeGigTypeTab, setActiveGigTypeTab,
     isMomentModalOpen, setIsMomentModalOpen,
     newMomentRequest, setNewMomentRequest,
+    isBulkSingerModalOpen, setIsBulkSingerModalOpen,
     confirmConfig, setConfirmConfig,
 
     // Actions

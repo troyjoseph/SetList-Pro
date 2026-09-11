@@ -19,8 +19,8 @@ export const MomentItem: React.FC<MomentItemProps> = ({ moment, song, activeSing
     if (moment.assignedSingerId && song) {
        const assignedSinger = allSingers.find(s => s.id === moment.assignedSingerId);
        if (assignedSinger && assignedSinger.repertoire[song.id]) {
-           const repKey = assignedSinger.repertoire[song.id];
-           currentKey = repKey === 'OG' ? song.originalKey : repKey;
+           const repItem = assignedSinger.repertoire[song.id];
+           currentKey = repItem.key === 'OG' ? song.originalKey : repItem.key;
        }
     }
 

@@ -1,8 +1,8 @@
 import styled from 'styled-components';
 
 export const COMMON = {
-  PAGE_CONTAINER: styled.div.attrs({ className: "p-8 max-w-6xl mx-auto h-full flex flex-col" })``,
-  HEADER_FLEX: styled.div.attrs({ className: "flex justify-between items-center mb-6" })``,
+  PAGE_CONTAINER: styled.div.attrs({ className: "p-4 sm:p-8 max-w-6xl mx-auto h-full flex flex-col" })``,
+  HEADER_FLEX: styled.div.attrs({ className: "flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 sm:gap-0" })``,
   TITLE: styled.h1.attrs({ className: "text-3xl font-bold text-gray-800" })``,
   SUBTITLE: styled.p.attrs({ className: "text-gray-500 mt-1" })``,
   HIDDEN: "hidden", // Helper string for inputs remains useful as string
