@@ -18,12 +18,14 @@ interface SlotViewProps {
   onDragStart: (e: React.DragEvent, type: 'MOVE', data: DragPayload) => void;
   onDrop: (e: React.DragEvent, setIndex: number, slotIndex: number) => void;
   onSingerChange: (singerId: string) => void;
+  onKeyChange: (key: string) => void;
   onRemove: () => void;
+  onEditSong?: (song: Song) => void;
 }
 
-export const SlotView: React.FC<SlotViewProps> = ({ 
+export const SlotView: React.FC<SlotViewProps> = ({
     slot, index, setIndex, song, singer, activeSingers, gigType, songs, nextSlot,
-    onDragStart, onDrop, onSingerChange, onRemove 
+    onDragStart, onDrop, onSingerChange, onKeyChange, onRemove, onEditSong
 }) => {
     
     // Calculate Transition Badge
@@ -62,12 +64,13 @@ export const SlotView: React.FC<SlotViewProps> = ({
 
     const controls = song ? (
         <>
-            <SingerSelect 
+            <SingerSelect
                 value={slot.singerId}
                 onChange={onSingerChange}
                 activeSingers={activeSingers}
                 song={song}
                 currentKey={slot.key}
+                onKeyChange={onKeyChange}
                 extraOption={singer ? { id: singer.id, name: singer.name } : undefined}
             />
             <button onClick={onRemove} className={EDITOR.ROW.REMOVE_BTN}>
@@ -84,6 +87,7 @@ export const SlotView: React.FC<SlotViewProps> = ({
          rightControls={controls}
          badges={badges}
          extraContent={transitionBadge}
+         onTitleClick={song && onEditSong ? () => onEditSong(song) : undefined}
          isEmpty={!slot.songId}
          emptyText="Empty Slot"
          draggable={!!slot.songId}

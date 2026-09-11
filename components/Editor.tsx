@@ -22,11 +22,12 @@ interface EditorProps {
   isAddingSong: boolean;
   onOpenMomentModal: () => void;
   onOpenAppSidebar?: () => void;
+  onEditSong?: (song: Song) => void;
 }
 
-export const Editor: React.FC<EditorProps> = ({ 
+export const Editor: React.FC<EditorProps> = ({
     event, setEvent, songs, activeSingers, allSingers,
-    onAutoFill, onExport, onViewChange, onAddSong, isAddingSong, onOpenMomentModal, onOpenAppSidebar 
+    onAutoFill, onExport, onViewChange, onAddSong, isAddingSong, onOpenMomentModal, onOpenAppSidebar, onEditSong
 }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
     
@@ -134,6 +135,14 @@ export const Editor: React.FC<EditorProps> = ({
         }
     };
 
+    const handleKeyChange = (setIndex: number, slotIndex: number, newKey: string) => {
+        const newSets = [...event.sets];
+        const slot = newSets[setIndex].slots[slotIndex];
+        if (!slot.songId) return;
+        slot.key = newKey;
+        setEvent({ ...event, sets: newSets });
+    };
+
     const handleRemoveSlot = (setIdx: number, slotIdx: number) => {
         const newSets = [...event.sets];
         newSets[setIdx].slots[slotIdx] = { id: uuidv4(), songId: '', singerId: '', key: '', isRequest: false };
@@ -235,8 +244,10 @@ export const Editor: React.FC<EditorProps> = ({
                         onDrop={handleDrop}
                         onDragStart={handleDragStart}
                         onSingerChange={handleSingerChange}
+                        onKeyChange={handleKeyChange}
                         onRemoveSlot={handleRemoveSlot}
                         onAddSlot={handleAddSlot}
+                        onEditSong={onEditSong}
                     />
                  ))}
 

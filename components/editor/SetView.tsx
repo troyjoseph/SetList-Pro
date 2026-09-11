@@ -14,13 +14,15 @@ interface SetViewProps {
   onDrop: (e: React.DragEvent, setIndex: number, slotIndex: number) => void;
   onDragStart: (e: React.DragEvent, type: 'MOVE', data: DragPayload) => void;
   onSingerChange: (setIndex: number, slotIndex: number, singerId: string) => void;
+  onKeyChange: (setIndex: number, slotIndex: number, key: string) => void;
   onRemoveSlot: (setIndex: number, slotIndex: number) => void;
   onAddSlot: (setIndex: number) => void;
+  onEditSong?: (song: Song) => void;
 }
 
-export const SetView: React.FC<SetViewProps> = ({ 
+export const SetView: React.FC<SetViewProps> = ({
     set, index: setIndex, songs, activeSingers, allSingers, gigType,
-    onDrop, onDragStart, onSingerChange, onRemoveSlot, onAddSlot
+    onDrop, onDragStart, onSingerChange, onKeyChange, onRemoveSlot, onAddSlot, onEditSong
 }) => {
    return (
     <div className={EDITOR.SET.CONTAINER}>
@@ -62,7 +64,9 @@ export const SetView: React.FC<SetViewProps> = ({
                  onDragStart={onDragStart}
                  onDrop={onDrop}
                  onSingerChange={(sid) => onSingerChange(setIndex, slotIndex, sid)}
+                 onKeyChange={(key) => onKeyChange(setIndex, slotIndex, key)}
                  onRemove={() => onRemoveSlot(setIndex, slotIndex)}
+                 onEditSong={onEditSong}
                />
              );
           })}

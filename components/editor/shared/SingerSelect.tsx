@@ -8,21 +8,34 @@ interface SingerSelectProps {
   activeSingers: Singer[];
   song: Song;
   currentKey: string;
+  onKeyChange?: (key: string) => void;
   includeAuto?: boolean;
   extraOption?: { id: string; name: string };
 }
 
-export const SingerSelect: React.FC<SingerSelectProps> = ({ 
-  value, onChange, activeSingers, song, currentKey, includeAuto, extraOption 
+export const SingerSelect: React.FC<SingerSelectProps> = ({
+  value, onChange, activeSingers, song, currentKey, onKeyChange, includeAuto, extraOption
 }) => {
   const isKeyChange = song && currentKey !== song.originalKey;
 
   return (
     <div className={EDITOR.ROW.SINGER_COL}>
-      <div className={EDITOR.ROW.KEY_BADGE(isKeyChange)}>
-         {currentKey}
-      </div>
-      <select 
+      {onKeyChange ? (
+         <input
+            type="text"
+            value={currentKey}
+            onChange={e => onKeyChange(e.target.value)}
+            onClick={e => e.stopPropagation()}
+            onFocus={e => e.target.select()}
+            className={EDITOR.ROW.KEY_INPUT(isKeyChange)}
+            title="Key"
+         />
+      ) : (
+         <div className={EDITOR.ROW.KEY_BADGE(isKeyChange)}>
+            {currentKey}
+         </div>
+      )}
+      <select
          value={value}
          onChange={e => onChange(e.target.value)}
          className={EDITOR.ROW.SELECT}

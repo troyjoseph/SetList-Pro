@@ -132,10 +132,15 @@ export const MainContent: React.FC<MainContentProps> = (props) => {
                 onAddSong={props.onAddSong} 
                 isAddingSong={isAddingSong} 
                 onOpenAppSidebar={onOpenAppSidebar}
-                onOpenMomentModal={() => { 
-                    props.setNewMomentRequest({ assignedSingerId: '' }); 
-                    props.setIsMomentModalOpen(true); 
-                }} 
+                onOpenMomentModal={() => {
+                    props.setNewMomentRequest({ assignedSingerId: '' });
+                    props.setIsMomentModalOpen(true);
+                }}
+                onEditSong={(s) => {
+                    props.setEditingSong({...s});
+                    props.setActiveGigTypeTab(currentEvent.gigType);
+                    props.setIsSongModalOpen(true);
+                }}
             />
           )}
         </LAYOUT.SCROLL_AREA>

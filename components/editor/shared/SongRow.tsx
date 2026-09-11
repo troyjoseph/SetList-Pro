@@ -14,12 +14,13 @@ interface SongRowProps {
   onDragStart?: (e: React.DragEvent) => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDrop?: (e: React.DragEvent) => void;
+  onTitleClick?: () => void;
   className?: string;
 }
 
 export const SongRow: React.FC<SongRowProps> = ({
-  title, subtitle, leftIcon, rightControls, badges, extraContent, 
-  isEmpty, emptyText, draggable, onDragStart, onDragOver, onDrop, className
+  title, subtitle, leftIcon, rightControls, badges, extraContent,
+  isEmpty, emptyText, draggable, onDragStart, onDragOver, onDrop, onTitleClick, className
 }) => {
   if (isEmpty) {
     return (
@@ -48,10 +49,18 @@ export const SongRow: React.FC<SongRowProps> = ({
       
       <div className={EDITOR.ROW.CONTENT}>
          <div className={EDITOR.ROW.TITLE_ROW}>
-            <span className={EDITOR.ROW.TITLE}>{title}</span>
+            {onTitleClick ? (
+               <button type="button" onClick={e => { e.stopPropagation(); onTitleClick(); }} className={EDITOR.ROW.TITLE_BTN} title="Edit song details">{title}</button>
+            ) : (
+               <span className={EDITOR.ROW.TITLE}>{title}</span>
+            )}
             {badges}
          </div>
-         <div className={EDITOR.ROW.SUBTITLE}>{subtitle}</div>
+         {onTitleClick ? (
+            <button type="button" onClick={e => { e.stopPropagation(); onTitleClick(); }} className={EDITOR.ROW.SUBTITLE_BTN} title="Edit song details">{subtitle}</button>
+         ) : (
+            <div className={EDITOR.ROW.SUBTITLE}>{subtitle}</div>
+         )}
          {extraContent}
       </div>
 
